@@ -1,2 +1,2 @@
-# In-ynierka
+# Inżynierka
 Projekt na pracę inżynierską
