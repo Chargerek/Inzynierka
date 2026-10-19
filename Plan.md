@@ -202,15 +202,15 @@ Checklista:
 
 ---
 
-### Etap 4 — Auth REST API
+### Etap 4 — Auth REST API ✅
 **Feature:** rejestracja pacjenta, login JWT, role, `/me` (endpointy REST).
 
 Checklista:
-- [ ] `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
-- [ ] bcrypt + walidacja Pydantic
-- [ ] Dependency ról → 403 dla złej roli
-- [ ] Lekarz tworzony tylko przez admina
-- [ ] Smoke w Swagger; opcjonalnie 2–3 testy pytest
+- [x] `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
+- [x] bcrypt + walidacja Pydantic
+- [x] Dependency ról → 403 dla złej roli
+- [x] Lekarz tworzony tylko przez admina
+- [x] Smoke w Swagger; opcjonalnie 2–3 testy pytest
 
 **Test:** rejestracja → login → `/me`; zły token 401; pacjent na admin 403.  
 **Commit:** `feat: logowanie JWT i role w API`
@@ -391,7 +391,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 1 — Scaffold + Docker Compose (web/api/db)  
 - [x] Etap 2 — Postgres + Alembic w Compose  
 - [x] Etap 3 — Schema + seed  
-- [ ] Etap 4 — Auth REST API  
+- [x] Etap 4 — Auth REST API  
 - [ ] Etap 5 — Rezerwacje REST API  
 - [ ] Etap 6 — Auth UI  
 - [ ] Etap 7 — Rezerwacje UI  
@@ -408,5 +408,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 4** — logowanie JWT i role w API.  
-Napisz „rób etap 4”, gdy mam iść dalej.
+**Etap 5** — rezerwacje wizyt w API.  
+Napisz „rób etap 5”, gdy mam iść dalej.

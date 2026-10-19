@@ -28,10 +28,10 @@ Przy starcie kontenera `api` Alembic wykonuje migracje, a potem skrypt seed wsta
 
 | Konto | E-mail | Hasło |
 |-------|--------|-------|
-| Administrator | admin@gabinet.local | Demo123! |
-| Dermatolog | lekarz@gabinet.local | Demo123! |
-| Pacjent | jan.nowak@gabinet.local | Demo123! |
-| Pacjentka | maria.wisniewska@gabinet.local | Demo123! |
+| Administrator | admin@gabinet.pl | Demo123! |
+| Dermatolog | lekarz@gabinet.pl | Demo123! |
+| Pacjent | jan.nowak@gabinet.pl | Demo123! |
+| Pacjentka | maria.wisniewska@gabinet.pl | Demo123! |
 
 Ręcznie (np. po nowej migracji):
 
