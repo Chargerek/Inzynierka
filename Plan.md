@@ -192,12 +192,12 @@ Checklista:
 Encje: `User`, `PatientProfile`, `DoctorProfile`, `WorkingHours`, `Service`, `Appointment`, `SkinFinding`, `FindingPhoto`.
 
 Checklista:
-- [ ] `docs/er.md` (mermaid)
-- [ ] Modele SQLAlchemy + migracja Alembic
-- [ ] Seed: admin, 1 lekarz, 2 pacjentów, usługi, godziny
-- [ ] Indeksy: unique email; `(doctor_id, start)` na wizytach
+- [x] `docs/er.md` (mermaid)
+- [x] Modele SQLAlchemy + migracja Alembic
+- [x] Seed: admin, 1 lekarz, 2 pacjentów, usługi, godziny
+- [x] Indeksy: unique email; `(doctor_id, start)` na wizytach
 
-**Test:** seed → widać konta w DB; hasła demo w README.  
+**Test:** seed → konta w DB, hasła demo w README, hash bcrypt, po restarcie API nadal 4 użytkowników.  
 **Commit:** `feat: schemat bazy i dane demo`
 
 ---
@@ -390,7 +390,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 0 — Kickoff  
 - [x] Etap 1 — Scaffold + Docker Compose (web/api/db)  
 - [x] Etap 2 — Postgres + Alembic w Compose  
-- [ ] Etap 3 — Schema + seed  
+- [x] Etap 3 — Schema + seed  
 - [ ] Etap 4 — Auth REST API  
 - [ ] Etap 5 — Rezerwacje REST API  
 - [ ] Etap 6 — Auth UI  
@@ -408,5 +408,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 3** — schemat MVP + seed.  
-Napisz „rób etap 3”, gdy mam iść dalej.
+**Etap 4** — logowanie JWT i role w API.  
+Napisz „rób etap 4”, gdy mam iść dalej.

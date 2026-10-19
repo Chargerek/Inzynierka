@@ -24,7 +24,14 @@ Po starcie:
 | localhost:5432 | PostgreSQL (tylko lokalnie / dla narzędzi) |
 
 `/health` zwraca `database: ok` dopiero gdy API połączy się z Postgresem.  
-Przy starcie kontenera `api` Alembic sam wykonuje `upgrade head`.
+Przy starcie kontenera `api` Alembic wykonuje migracje, a potem skrypt seed wstawia konta demo (tylko gdy bazy jeszcze nie ma).
+
+| Konto | E-mail | Hasło |
+|-------|--------|-------|
+| Administrator | admin@gabinet.local | Demo123! |
+| Dermatolog | lekarz@gabinet.local | Demo123! |
+| Pacjent | jan.nowak@gabinet.local | Demo123! |
+| Pacjentka | maria.wisniewska@gabinet.local | Demo123! |
 
 Ręcznie (np. po nowej migracji):
 
