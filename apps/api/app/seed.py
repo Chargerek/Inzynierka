@@ -10,27 +10,27 @@ DEMO_PASSWORD = "Demo123!"
 
 USERS = [
     {
-        "email": "admin@gabinet.local",
+        "email": "admin@gabinet.pl",
         "role": UserRole.ADMIN,
         "first_name": "Administrator",
         "last_name": "Gabinetu",
     },
     {
-        "email": "lekarz@gabinet.local",
+        "email": "lekarz@gabinet.pl",
         "role": UserRole.DERMATOLOGIST,
         "first_name": "Anna",
         "last_name": "Kowalska",
         "phone": "500100200",
     },
     {
-        "email": "jan.nowak@gabinet.local",
+        "email": "jan.nowak@gabinet.pl",
         "role": UserRole.PATIENT,
         "first_name": "Jan",
         "last_name": "Nowak",
         "birth_date": date(1990, 4, 12),
     },
     {
-        "email": "maria.wisniewska@gabinet.local",
+        "email": "maria.wisniewska@gabinet.pl",
         "role": UserRole.PATIENT,
         "first_name": "Maria",
         "last_name": "Wiśniewska",
@@ -41,7 +41,7 @@ USERS = [
 
 def seed() -> None:
     with SessionLocal() as session:
-        existing = session.scalar(select(User).where(User.email == "admin@gabinet.local"))
+        existing = session.scalar(select(User).where(User.email == "admin@gabinet.pl"))
         if existing is not None:
             return
 
@@ -61,7 +61,7 @@ def seed() -> None:
         session.flush()
 
         doctor = DoctorProfile(
-            user_id=created["lekarz@gabinet.local"].id,
+            user_id=created["lekarz@gabinet.pl"].id,
             specialization="Dermatologia",
             bio="Lekarz przyjmujący w gabinecie demonstracyjnym.",
         )

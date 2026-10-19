@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     database_url: str = (
         "postgresql+psycopg://inzynierka:inzynierka@localhost:5432/inzynierka"
     )
+    jwt_secret_key: str = "zmien-to-w-env-lokalnym"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
 
     @property
     def cors_origin_list(self) -> list[str]:
