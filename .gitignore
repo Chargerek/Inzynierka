@@ -1,0 +1,37 @@
+# Env
+.env
+.env.local
+.env.*.local
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/venv/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/*.tsbuildinfo
+# Uploads (keep folder via .gitkeep)
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log
+
+# Docker
+*.pid
+
+# Plans
+gotowy_plan.md
+założenia_dotychczas.md
