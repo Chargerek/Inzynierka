@@ -217,17 +217,17 @@ Checklista:
 
 ---
 
-### Etap 5 — Rezerwacje REST API
+### Etap 5 — Rezerwacje REST API ✅
 **Feature:** usługi, sloty, rezerwacja, odwołanie, kalendarz lekarza (REST/JSON).
 
 Checklista:
-- [ ] CRUD usług (admin)
-- [ ] Godziny pracy / dostępność
-- [ ] `GET /availability` bez overlappingów
-- [ ] Rezerwacja + konflikt 409
-- [ ] Odwołanie (np. reguła >24h)
-- [ ] Lista wizyt lekarza `from`/`to`
-- [ ] Publiczny cennik `GET /services`
+- [x] CRUD usług (admin)
+- [x] Godziny pracy / dostępność
+- [x] `GET /availability` bez overlappingów
+- [x] Rezerwacja + konflikt 409
+- [x] Odwołanie (np. reguła >24h)
+- [x] Lista wizyt lekarza `from`/`to`
+- [x] Publiczny cennik `GET /services`
 
 **Test:** slot → rezerwacja → drugi raz błąd → odwołanie → slot wolny; lekarz widzi wizytę.  
 **Commit:** `feat: rezerwacje wizyt w API`
@@ -392,7 +392,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 2 — Postgres + Alembic w Compose  
 - [x] Etap 3 — Schema + seed  
 - [x] Etap 4 — Auth REST API  
-- [ ] Etap 5 — Rezerwacje REST API  
+- [x] Etap 5 — Rezerwacje REST API  
 - [ ] Etap 6 — Auth UI  
 - [ ] Etap 7 — Rezerwacje UI  
 - [ ] Etap 8 — Mapa ciała  
@@ -408,5 +408,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 5** — rezerwacje wizyt w API.  
-Napisz „rób etap 5”, gdy mam iść dalej.
+**Etap 6** — frontend: layout + auth (PL).  
+Napisz „rób etap 6”, gdy mam iść dalej.

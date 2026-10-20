@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import auth, health
+from app.routers import appointments, auth, availability, doctors, health, services
 
 app = FastAPI(
     title=settings.app_name,
@@ -20,3 +20,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(services.router)
+app.include_router(doctors.router)
+app.include_router(availability.router)
+app.include_router(appointments.router)
