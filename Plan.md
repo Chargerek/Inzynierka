@@ -234,15 +234,15 @@ Checklista:
 
 ---
 
-### Etap 6 — Frontend: layout + auth (PL)
+### Etap 6 — Frontend: layout + auth (PL) ✅
 **Feature:** landing, logowanie/rejestracja, panele wg roli.
 
 Checklista:
-- [ ] Layout: publiczny / pacjent / lekarz / admin
-- [ ] Landing + CTA po polsku
-- [ ] Login/register → trzymanie tokena (ustać: memory vs cookie)
-- [ ] Guard tras (`/doctor/*` nie dla pacjenta)
-- [ ] Klient API; 401 → wylogowanie
+- [x] Layout: publiczny / pacjent / lekarz / admin
+- [x] Landing + CTA po polsku
+- [x] Login/register → trzymanie tokena (ustać: memory vs cookie)
+- [x] Guard tras (`/doctor/*` nie dla pacjenta)
+- [x] Klient API; 401 → wylogowanie
 
 **Test:** trzy role → trzy różne nawigacje; wylogowanie czyści sesję.  
 **Commit:** `feat: logowanie i layouty ról`
@@ -393,7 +393,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 3 — Schema + seed  
 - [x] Etap 4 — Auth REST API  
 - [x] Etap 5 — Rezerwacje REST API  
-- [ ] Etap 6 — Auth UI  
+- [x] Etap 6 — Auth UI  
 - [ ] Etap 7 — Rezerwacje UI  
 - [ ] Etap 8 — Mapa ciała  
 - [ ] Etap 9 — Historia / porównanie  
@@ -408,5 +408,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 6** — frontend: layout + auth (PL).  
-Napisz „rób etap 6”, gdy mam iść dalej.
+**Etap 7** — frontend: rezerwacje i kalendarz.  
+Napisz „rób etap 7”, gdy mam iść dalej.
