@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
@@ -62,6 +63,18 @@ class UserRead(BaseModel):
     first_name: str
     last_name: str
     phone: str | None
+
+
+class AdminUserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: EmailStr
+    role: Literal["patient", "dermatologist", "admin"]
+    first_name: str
+    last_name: str
+    phone: str | None
+    created_at: datetime
 
 
 class DoctorCreateRequest(BaseModel):

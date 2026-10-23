@@ -249,15 +249,15 @@ Checklista:
 
 ---
 
-### Etap 7 — Frontend: rezerwacje + kalendarz
+### Etap 7 — Frontend: rezerwacje + kalendarz ✅
 **Feature:** pełny happy path rezerwacji w UI.
 
 Checklista:
-- [ ] Flow: usługa → lekarz → data → slot → potwierdzenie
-- [ ] Historia + odwołanie u pacjenta
-- [ ] Cennik
-- [ ] Kalendarz lekarza + edycja dostępności
-- [ ] Admin: usługi (i lista userów minimum)
+- [x] Flow: usługa → lekarz → data → slot → potwierdzenie
+- [x] Historia + odwołanie u pacjenta
+- [x] Cennik
+- [x] Kalendarz lekarza + edycja dostępności
+- [x] Admin: usługi (i lista userów minimum)
 
 **Test:** pacjent rezerwuje → lekarz widzi → pacjent odwołuje → slot wolny.  
 **Commit:** `feat: rezerwacje i kalendarz w UI`
@@ -394,7 +394,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 4 — Auth REST API  
 - [x] Etap 5 — Rezerwacje REST API  
 - [x] Etap 6 — Auth UI  
-- [ ] Etap 7 — Rezerwacje UI  
+- [x] Etap 7 — Rezerwacje UI  
 - [ ] Etap 8 — Mapa ciała  
 - [ ] Etap 9 — Historia / porównanie  
 - [ ] Etap 10 — E-mail (+ mailpit)  
@@ -408,5 +408,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 7** — frontend: rezerwacje i kalendarz.  
-Napisz „rób etap 7”, gdy mam iść dalej.
+**Etap 8** — mapa ciała 2D.  
+Napisz „rób etap 8”, gdy mam iść dalej.

@@ -2,7 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import appointments, auth, availability, doctors, health, services
+from app.routers import (
+    admin,
+    appointments,
+    auth,
+    availability,
+    doctors,
+    health,
+    services,
+)
 
 app = FastAPI(
     title=settings.app_name,
@@ -24,3 +32,4 @@ app.include_router(services.router)
 app.include_router(doctors.router)
 app.include_router(availability.router)
 app.include_router(appointments.router)
+app.include_router(admin.router)
