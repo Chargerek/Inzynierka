@@ -40,16 +40,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    let active = true;
     const stored = window.sessionStorage.getItem(TOKEN_STORAGE_KEY);
     if (!stored) {
-      setLoading(false);
-      return;
+      queueMicrotask(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+      return () => {
+        active = false;
+      };
     }
-    setToken(stored);
+    queueMicrotask(() => {
+      if (active) {
+        setToken(stored);
+      }
+    });
     apiFetch<User>("/auth/me", { token: stored, onUnauthorized: logout })
-      .then(setUser)
-      .catch(() => logout())
-      .finally(() => setLoading(false));
+      .then((me) => {
+        if (active) {
+          setUser(me);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          logout();
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [logout]);
 
   const login = useCallback(

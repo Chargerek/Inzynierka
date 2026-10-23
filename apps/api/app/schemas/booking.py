@@ -55,6 +55,7 @@ class WorkingHoursReplaceRequest(BaseModel):
 
 class DoctorRead(BaseModel):
     id: int
+    user_id: int
     first_name: str
     last_name: str
     specialization: str

@@ -34,6 +34,7 @@ def _to_read(appointment: Appointment, *, include_doctor: bool = True, include_p
     if include_doctor and appointment.doctor is not None:
         doctor = DoctorRead(
             id=appointment.doctor.id,
+            user_id=appointment.doctor.user_id,
             first_name=appointment.doctor.user.first_name,
             last_name=appointment.doctor.user.last_name,
             specialization=appointment.doctor.specialization,
