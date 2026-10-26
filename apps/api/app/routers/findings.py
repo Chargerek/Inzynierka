@@ -38,6 +38,7 @@ from app.schemas.findings import (
 from app.services.findings import (
     extension_for_mime,
     is_photo_size_allowed,
+    sniff_image_mime,
     validate_geometry,
 )
 
@@ -100,8 +101,20 @@ def _doctor_has_access_to_patient(db: Session, doctor_id: int, patient_id: int) 
 
 
 def _require_patient_access(db: Session, user: User, patient_id: int) -> None:
-    """Lekarz musi mieć (lub mieć mieć) wizytę z pacjentem; admin zawsze."""
+    """Kto może sięgać po dokumentację pacjenta:
+    - pacjent — wyłącznie własną,
+    - lekarz — pacjenta, z którym ma (lub miał) wizytę,
+    - admin — każdą.
+    """
     if user.role == UserRole.ADMIN:
+        return
+    if user.role == UserRole.PATIENT:
+        profile = _get_patient_profile_by_user(db, user)
+        if profile.id != patient_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Możesz przeglądać tylko własną dokumentację.",
+            )
         return
     doctor = _get_doctor_profile(db, user)
     if not _doctor_has_access_to_patient(db, doctor.id, patient_id):
@@ -369,6 +382,11 @@ async def upload_report_photo(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="Zdjęcie może mieć maksymalnie 5 MB.",
         )
+    if sniff_image_mime(data) != (file.content_type or "").lower():
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Zawartość pliku nie jest zdjęciem JPEG, PNG ani WebP.",
+        )
 
     uploads_dir = Path(settings.uploads_dir)
     uploads_dir.mkdir(parents=True, exist_ok=True)
@@ -425,15 +443,7 @@ def list_patient_findings(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if user.role == UserRole.PATIENT:
-        profile = _get_patient_profile_by_user(db, user)
-        if profile.id != patient_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Możesz przeglądać tylko własną dokumentację.",
-            )
-    else:
-        _require_patient_access(db, user, patient_id)
+    _require_patient_access(db, user, patient_id)
     findings = db.scalars(
         select(SkinFinding)
         .where(SkinFinding.patient_id == patient_id)
@@ -563,6 +573,11 @@ async def upload_finding_photo(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="Zdjęcie może mieć maksymalnie 5 MB.",
         )
+    if sniff_image_mime(data) != (file.content_type or "").lower():
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Zawartość pliku nie jest zdjęciem JPEG, PNG ani WebP.",
+        )
 
     uploads_dir = Path(settings.uploads_dir)
     uploads_dir.mkdir(parents=True, exist_ok=True)
@@ -588,15 +603,7 @@ def get_finding_photo(
     user: User = Depends(get_current_user),
 ):
     finding = _get_finding(db, finding_id)
-    if user.role == UserRole.PATIENT:
-        profile = _get_patient_profile_by_user(db, user)
-        if profile.id != finding.patient_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Możesz przeglądać tylko własną dokumentację.",
-            )
-    else:
-        _require_patient_access(db, user, finding.patient_id)
+    _require_patient_access(db, user, finding.patient_id)
 
     photo = db.scalar(
         select(FindingPhoto).where(

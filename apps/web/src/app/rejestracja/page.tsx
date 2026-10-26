@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,6 +28,10 @@ export default function RegisterPage() {
       setError("Hasła nie są takie same.");
       return;
     }
+    if (!consent) {
+      setError("Musisz wyrazić zgodę na przetwarzanie danych osobowych.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -36,6 +41,7 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
         phone: phone.trim() || null,
+        consent_accepted: consent,
       });
       router.replace("/panel");
     } catch (err) {
@@ -135,6 +141,24 @@ export default function RegisterPage() {
               onChange={(event) => setPasswordConfirm(event.target.value)}
               className="rounded-md border border-zinc-300 bg-gray-100 px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
             />
+          </label>
+
+          <label className="flex items-start gap-2.5 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              required
+              checked={consent}
+              onChange={(event) => setConsent(event.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-violet-700"
+            />
+            <span>
+              Wyrażam zgodę na przetwarzanie moich danych osobowych (w tym
+              danych o zdrowiu) w celu rezerwacji wizyt i prowadzenia
+              dokumentacji.{" "}
+              <span className="text-zinc-500">
+                To wersja demonstracyjna — dane są przechowywane lokalnie.
+              </span>
+            </span>
           </label>
 
           {error ? (

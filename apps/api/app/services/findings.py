@@ -154,3 +154,18 @@ def extension_for_mime(mime: str | None) -> str | None:
 
 def is_photo_size_allowed(size: int) -> bool:
     return 0 < size <= MAX_PHOTO_SIZE_BYTES
+
+
+def sniff_image_mime(data: bytes) -> str | None:
+    """Rozpoznaje prawdziwy typ obrazka po pierwszych bajtach pliku.
+
+    Zwraca MIME (JPEG/PNG/WebP) albo None, gdy zawartość nie jest obrazkiem —
+    dzięki temu plik .exe z fałszywym nagłówkiem Content-Type zostanie odrzucony.
+    """
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
