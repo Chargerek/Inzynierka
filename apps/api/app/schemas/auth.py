@@ -13,6 +13,16 @@ class RegisterRequest(BaseModel):
     first_name: str
     last_name: str
     phone: str | None = None
+    consent_accepted: bool
+
+    @field_validator("consent_accepted")
+    @classmethod
+    def consent_required(cls, value: bool) -> bool:
+        if not value:
+            raise ValueError(
+                "Zgoda na przetwarzanie danych osobowych jest wymagana."
+            )
+        return value
 
     @field_validator("password")
     @classmethod

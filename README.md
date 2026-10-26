@@ -50,6 +50,11 @@ Zatrzymanie:
 docker compose down
 ```
 
+## Prywatność i bezpieczeństwo
+
+Skrót zasad (role, zgoda przy rejestracji, limity i weryfikacja uploadów, bcrypt):
+[docs/prywatnosc.md](docs/prywatnosc.md).
+
 ## Struktura
 
 ```

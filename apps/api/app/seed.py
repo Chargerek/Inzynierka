@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time, timezone
 
 from sqlalchemy import select
 
@@ -46,6 +46,7 @@ def seed() -> None:
             return
 
         password_hash = hash_password(DEMO_PASSWORD)
+        consent_at = datetime.now(timezone.utc)
         created: dict[str, User] = {}
         for item in USERS:
             user = User(
@@ -55,6 +56,7 @@ def seed() -> None:
                 first_name=item["first_name"],
                 last_name=item["last_name"],
                 phone=item.get("phone"),
+                consent_at=consent_at,
             )
             session.add(user)
             created[item["email"]] = user

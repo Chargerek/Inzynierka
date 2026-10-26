@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -35,6 +37,7 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
         first_name=body.first_name,
         last_name=body.last_name,
         phone=body.phone,
+        consent_at=datetime.now(timezone.utc),
     )
     db.add(user)
     db.flush()

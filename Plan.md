@@ -316,17 +316,17 @@ Checklista:
 
 ---
 
-### Etap 11 — Bezpieczeństwo (minimum pod dane medyczne)
+### Etap 11 — Bezpieczeństwo (minimum pod dane medyczne) ✅
 **Feature:** twardsze reguły dostępu i uploadu — to jest „checklist RODO” w praktyce (patrz §5 poniżej).
 
 Checklista:
-- [ ] Pacjent widzi tylko swoje dane (test IDOR → 403)
-- [ ] Lekarz: dostęp do swoich pacjentów/wizyt (jasna reguła)
-- [ ] Upload: limit rozmiaru + tylko jpg/png/webp
-- [ ] Checkbox zgody przy rejestracji + timestamp w DB
-- [ ] Krótka notatka w README/docs: co trzymamy, hasła hashowane, brak PESEL jeśli niepotrzebny
+- [x] Pacjent widzi tylko swoje dane (test IDOR → 403; spójna `_require_patient_access` dla wszystkich ról)
+- [x] Lekarz: dostęp do swoich pacjentów/wizyt (reguła „co najmniej jedna wizyta”, komunikat 403 po polsku)
+- [x] Upload: limit 5 MB + tylko jpg/png/webp — dodatkowo weryfikacja zawartości po bajtach (magic bytes), `.exe` jako `image/jpeg` → 415
+- [x] Checkbox zgody przy rejestracji + `consent_at` w DB (migracja 0006, walidacja 422, checkbox wymagany w UI)
+- [x] Notatka [docs/prywatnosc.md](docs/prywatnosc.md): co trzymamy, bcrypt, brak PESEL, zdjęcia tylko z tokenem + link z README
 
-**Test:** cudze ID → 403; `.exe` odrzucone.  
+**Test:** cudze ID → 403; `.exe` odrzucone (415); 6 MB → 413; rejestracja bez zgody → 422.  
 **Commit:** `feat: kontrola dostępu i podstawy prywatności`
 
 ---
@@ -413,7 +413,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 8 — Mapa ciała  
 - [x] Etap 9 — Historia / porównanie  
 - [x] Etap 10 — E-mail (+ mailpit)  
-- [ ] Etap 11 — Bezpieczeństwo  
+- [x] Etap 11 — Bezpieczeństwo  
 - [ ] Etap 12 — Testy smoke  
 - [ ] Etap 13 — Polish demo  
 - [ ] Etap 14 — Runbook Docker  
@@ -423,5 +423,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 11** — bezpieczeństwo (minimum pod dane medyczne).  
-Napisz „rób etap 11”, gdy mam iść dalej.
+**Etap 12** — testy smoke (przejście kluczowych ścieżek przed demo).  
+Napisz „rób etap 12”, gdy mam iść dalej.
