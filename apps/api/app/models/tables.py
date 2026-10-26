@@ -43,6 +43,11 @@ class BodySide(str, enum.Enum):
     BACK = "back"
 
 
+class BodyFigure(str, enum.Enum):
+    MALE = "male"
+    FEMALE = "female"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -71,6 +76,7 @@ class PatientProfile(Base):
     user: Mapped[User] = relationship(back_populates="patient_profile")
     appointments: Mapped[list["Appointment"]] = relationship(back_populates="patient")
     findings: Mapped[list["SkinFinding"]] = relationship(back_populates="patient")
+    reports: Mapped[list["MedicalReport"]] = relationship(back_populates="patient")
 
 
 class DoctorProfile(Base):
@@ -131,11 +137,41 @@ class Appointment(Base):
     findings: Mapped[list["SkinFinding"]] = relationship(back_populates="appointment")
 
 
+class MedicalReport(Base):
+    __tablename__ = "medical_reports"
+    __table_args__ = (Index("ix_medical_reports_patient_id_created_at", "patient_id", "created_at"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"))
+    doctor_id: Mapped[int | None] = mapped_column(ForeignKey("doctor_profiles.id"))
+    body_figure: Mapped[BodyFigure] = mapped_column(
+        Enum(BodyFigure, name="body_figure", values_callable=_enum_values),
+        default=BodyFigure.MALE,
+    )
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    patient: Mapped[PatientProfile] = relationship(back_populates="reports")
+    doctor: Mapped[DoctorProfile | None] = relationship()
+    findings: Mapped[list["SkinFinding"]] = relationship(
+        back_populates="report", order_by="SkinFinding.created_at"
+    )
+    photos: Mapped[list["ReportPhoto"]] = relationship(
+        back_populates="report", order_by="ReportPhoto.created_at"
+    )
+
+
 class SkinFinding(Base):
     __tablename__ = "skin_findings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     patient_id: Mapped[int] = mapped_column(ForeignKey("patient_profiles.id"))
+    report_id: Mapped[int | None] = mapped_column(
+        ForeignKey("medical_reports.id", ondelete="CASCADE"), index=True
+    )
     appointment_id: Mapped[int | None] = mapped_column(ForeignKey("appointments.id"))
     side: Mapped[BodySide] = mapped_column(
         Enum(BodySide, name="body_side", values_callable=_enum_values)
@@ -147,6 +183,7 @@ class SkinFinding(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     patient: Mapped[PatientProfile] = relationship(back_populates="findings")
+    report: Mapped[MedicalReport | None] = relationship(back_populates="findings")
     appointment: Mapped[Appointment | None] = relationship(back_populates="findings")
     photos: Mapped[list["FindingPhoto"]] = relationship(back_populates="finding")
 
@@ -160,3 +197,17 @@ class FindingPhoto(Base):
     mime: Mapped[str] = mapped_column(String(100))
 
     finding: Mapped[SkinFinding] = relationship(back_populates="photos")
+
+
+class ReportPhoto(Base):
+    __tablename__ = "report_photos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    report_id: Mapped[int] = mapped_column(
+        ForeignKey("medical_reports.id", ondelete="CASCADE"), index=True
+    )
+    path: Mapped[str] = mapped_column(String(500))
+    mime: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    report: Mapped[MedicalReport] = relationship(back_populates="photos")

@@ -8,6 +8,7 @@ from app.routers import (
     auth,
     availability,
     doctors,
+    findings,
     health,
     services,
 )
@@ -33,3 +34,4 @@ app.include_router(doctors.router)
 app.include_router(availability.router)
 app.include_router(appointments.router)
 app.include_router(admin.router)
+app.include_router(findings.router)

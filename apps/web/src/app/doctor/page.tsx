@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useAuth, useAuthorizedFetch } from "@/features/auth/auth-context";
 import { RoleGuard } from "@/features/auth/role-guard";
+import { PatientRecords } from "@/features/findings/patient-records";
 import { ApiError, apiFetch } from "@/lib/api";
 import {
   WEEKDAY_NAMES,
@@ -49,7 +50,9 @@ export default function DoctorPanelPage() {
 
 function DoctorPanel() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<"kalendarz" | "dostepnosc">("kalendarz");
+  const [tab, setTab] = useState<"kalendarz" | "dostepnosc" | "kartoteka">(
+    "kalendarz",
+  );
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,6 +84,7 @@ function DoctorPanel() {
               [
                 { id: "kalendarz", label: "Kalendarz" },
                 { id: "dostepnosc", label: "Dostępność" },
+                { id: "kartoteka", label: "Kartoteka" },
               ] as const
             ).map((item) => (
               <button
@@ -108,8 +112,10 @@ function DoctorPanel() {
         ) : null}
         {tab === "kalendarz" ? (
           <DoctorCalendar />
-        ) : (
+        ) : tab === "dostepnosc" ? (
           <AvailabilityEditor doctor={doctor} />
+        ) : (
+          <PatientRecords />
         )}
       </section>
     </div>
