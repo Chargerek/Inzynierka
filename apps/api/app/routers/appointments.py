@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -20,9 +20,18 @@ from app.schemas.booking import (
     AppointmentRead,
     DoctorRead,
     PatientSummary,
+    ReminderRunResult,
     ServiceRead,
 )
 from app.services.availability import get_doctor, is_slot_available
+from app.services.email import (
+    REMINDER_WINDOW,
+    booking_confirmation,
+    cancellation_notice,
+    due_for_reminder,
+    send_appointment_reminder,
+    send_email,
+)
 
 CANCELLATION_NOTICE = timedelta(hours=24)
 
@@ -86,6 +95,7 @@ def _get_doctor_profile(db: Session, user: User) -> DoctorProfile:
 )
 def create_appointment(
     body: AppointmentCreateRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(require_role(UserRole.PATIENT)),
 ):
@@ -124,7 +134,39 @@ def create_appointment(
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
+    # treść budujemy, póki sesja DB jest otwarta; wysyłka w tle
+    subject, body_text = booking_confirmation(appointment)
+    background_tasks.add_task(
+        send_email, appointment.patient.user.email, subject, body_text
+    )
     return _to_read(appointment)
+
+
+@router.post(
+    "/appointments/run-reminders",
+    response_model=ReminderRunResult,
+)
+def run_reminders(
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role(UserRole.DERMATOLOGIST, UserRole.ADMIN)),
+):
+    """Dev: wysyła przypomnienia 24 h przed wizytą (brak crona w demo)."""
+    now = datetime.now(timezone.utc)
+    upcoming = db.scalars(
+        select(Appointment).where(
+            Appointment.status == AppointmentStatus.CONFIRMED,
+            Appointment.start_at > now,
+            Appointment.start_at <= now + REMINDER_WINDOW,
+        )
+    )
+    due = due_for_reminder(list(upcoming), now)
+    sent = 0
+    for appointment in due:
+        if send_appointment_reminder(appointment):
+            appointment.reminder_sent_at = now
+            sent += 1
+    db.commit()
+    return ReminderRunResult(candidates=len(due), sent=sent)
 
 
 @router.get("/appointments/me", response_model=list[AppointmentRead])
@@ -195,6 +237,7 @@ def list_doctor_appointments(
 @router.post("/appointments/{appointment_id}/cancel", response_model=AppointmentRead)
 def cancel_appointment(
     appointment_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -239,6 +282,11 @@ def cancel_appointment(
     appointment.status = AppointmentStatus.CANCELLED
     db.commit()
     db.refresh(appointment)
+    # treść budujemy, póki sesja DB jest otwarta; wysyłka w tle
+    subject, body_text = cancellation_notice(appointment)
+    background_tasks.add_task(
+        send_email, appointment.patient.user.email, subject, body_text
+    )
     return _to_read(
         appointment,
         include_patient=user.role != UserRole.PATIENT,

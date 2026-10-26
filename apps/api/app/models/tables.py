@@ -130,6 +130,7 @@ class Appointment(Base):
         default=AppointmentStatus.PENDING,
     )
     notes: Mapped[str | None] = mapped_column(Text)
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     patient: Mapped[PatientProfile] = relationship(back_populates="appointments")
     doctor: Mapped[DoctorProfile] = relationship(back_populates="appointments")

@@ -302,13 +302,14 @@ Checklista:
 
 ---
 
-### Etap 10 — Powiadomienia e-mail
+### Etap 10 — Powiadomienia e-mail ✅
 **Feature:** mail po rezerwacji/odwołaniu (+ przypomnienie 24h opcjonalnie).
 
 Checklista:
-- [ ] Serwis **`mailpit`** w `docker-compose.yml`
-- [ ] Trigger na create/cancel Appointment
-- [ ] Endpoint ręcznego „run reminders” na dev
+- [x] Serwis **`mailpit`** w `docker-compose.yml` (SMTP `:1025`, UI `:8025`)
+- [x] Trigger na create/cancel Appointment (wysyłka w tle, błąd SMTP nie przerywa żądania)
+- [x] Endpoint ręcznego „run reminders” na dev (`POST /appointments/run-reminders`, bez duplikatów dzięki `reminder_sent_at`)
+- [x] Szablony PL: potwierdzenie, odwołanie, przypomnienie (polskie nazwy dni/miesięcy, strefa Europe/Warsaw)
 
 **Test:** rezerwacja → mail w UI Mailpita (port z compose, np. `:8025`).  
 **Commit:** `feat: powiadomienia e-mail o wizytach`
@@ -411,7 +412,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 7 — Rezerwacje UI  
 - [x] Etap 8 — Mapa ciała  
 - [x] Etap 9 — Historia / porównanie  
-- [ ] Etap 10 — E-mail (+ mailpit)  
+- [x] Etap 10 — E-mail (+ mailpit)  
 - [ ] Etap 11 — Bezpieczeństwo  
 - [ ] Etap 12 — Testy smoke  
 - [ ] Etap 13 — Polish demo  
@@ -422,5 +423,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 10** — powiadomienia e-mail (+ mailpit).  
-Napisz „rób etap 10”, gdy mam iść dalej.
+**Etap 11** — bezpieczeństwo (minimum pod dane medyczne).  
+Napisz „rób etap 11”, gdy mam iść dalej.

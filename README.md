@@ -21,7 +21,12 @@ Po starcie:
 | http://localhost:3000 | Frontend (Next.js) |
 | http://localhost:8000/health | REST API — healthcheck |
 | http://localhost:8000/docs | Swagger (dokumentacja REST) |
+| http://localhost:8025 | Mailpit — podgląd wysyłanych e-maili (dev) |
 | localhost:5432 | PostgreSQL (tylko lokalnie / dla narzędzi) |
+
+Powiadomienia e-mail (rezerwacja, odwołanie, przypomnienie 24 h) trafiają do
+Mailpita — żadna wiadomość nie opuszcza komputera. Przypomnienia uruchamia się
+ręcznie: `POST /appointments/run-reminders` (rola lekarz/admin, patrz Swagger).
 
 `/health` zwraca `database: ok` dopiero gdy API połączy się z Postgresem.  
 Przy starcie kontenera `api` Alembic wykonuje migracje, a potem skrypt seed wstawia konta demo (tylko gdy bazy jeszcze nie ma).
