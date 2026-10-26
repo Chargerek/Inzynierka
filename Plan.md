@@ -287,8 +287,15 @@ Checklista:
 
 ---
 
-### Etap 9 — Historia dokumentacji / porównanie
+### Etap 9 — Historia dokumentacji / porównanie ✅
 **Feature:** timeline + porównanie dwóch dat (poza ścisłym MVP, ale blisko mapy).
+
+Checklista:
+- [x] Oś czasu dokumentacji w kartotece (lista raportów z rail-em i znacznikami)
+- [x] Wybór dwóch raportów checkboxem „do porównania” (tylko w obrębie pacjenta) + przycisk „Porównaj wybrane”
+- [x] Widok side-by-side: dwie mapy tylko do odczytu ze wspólnym przełącznikiem przód/tył, kliknięcie zmiany podświetla ją na mapie
+- [x] Panele: data/lekarz/sylwetka, lista zmian, notatka lekarska, zdjęcia z podglądem (lightbox)
+- [x] Pasek podsumowania różnicy: liczba zmian i zdjęć przed → po (z deltą)
 
 **Test:** dwa wpisy w czasie → side-by-side czytelne.  
 **Commit:** `feat: historia zmian i porównanie`
@@ -403,7 +410,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 6 — Auth UI  
 - [x] Etap 7 — Rezerwacje UI  
 - [x] Etap 8 — Mapa ciała  
-- [ ] Etap 9 — Historia / porównanie  
+- [x] Etap 9 — Historia / porównanie  
 - [ ] Etap 10 — E-mail (+ mailpit)  
 - [ ] Etap 11 — Bezpieczeństwo  
 - [ ] Etap 12 — Testy smoke  
@@ -415,5 +422,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 9** — historia dokumentacji / porównanie.  
-Napisz „rób etap 9”, gdy mam iść dalej.
+**Etap 10** — powiadomienia e-mail (+ mailpit).  
+Napisz „rób etap 10”, gdy mam iść dalej.

@@ -12,6 +12,7 @@ import type {
   ReportSummary,
 } from "@/lib/types";
 
+import { ReportCompare } from "./report-compare";
 import { ReportEditor } from "./report-editor";
 
 type EditorState = {
@@ -37,6 +38,8 @@ export function PatientRecords() {
   const [search, setSearch] = useState("");
   const [reports, setReports] = useState<ReportSummary[] | null>(null);
   const [editor, setEditor] = useState<EditorState | null>(null);
+  const [compare, setCompare] = useState<[number, number] | null>(null);
+  const [checkedIds, setCheckedIds] = useState<number[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,7 +101,21 @@ export function PatientRecords() {
   const selectPatient = (id: number | null) => {
     if (id === patientId) return;
     setReports(null);
+    setCheckedIds([]);
     setPatientId(id);
+  };
+
+  const toggleCompare = (id: number) => {
+    setCheckedIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  };
+
+  const openCompare = () => {
+    if (!selectedPatient || checkedIds.length !== 2) return;
+    setCompare([checkedIds[0], checkedIds[1]]);
   };
 
   const openReport = (report: ReportSummary) => {
@@ -125,8 +142,23 @@ export function PatientRecords() {
   const closeEditor = () => {
     setEditor(null);
     setReports(null);
+    setCheckedIds([]);
     setReloadKey((key) => key + 1);
   };
+
+  if (compare && selectedPatient) {
+    return (
+      <ReportCompare
+        patient={{
+          id: selectedPatient.id,
+          first_name: selectedPatient.first_name,
+          last_name: selectedPatient.last_name,
+        }}
+        reportIds={compare}
+        onBack={() => setCompare(null)}
+      />
+    );
+  }
 
   if (editor) {
     return (
@@ -224,6 +256,24 @@ export function PatientRecords() {
           </p>
         ) : null}
 
+        {selectedPatient && reports && reports.length >= 2 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-violet-200 bg-violet-50 px-5 py-3">
+            <p className="text-sm text-violet-900">
+              {checkedIds.length === 0
+                ? "Zaznacz dwa raporty na osi czasu, aby porównać je obok siebie."
+                : `Do porównania wybrano: ${checkedIds.length} z 2`}
+            </p>
+            <button
+              type="button"
+              onClick={openCompare}
+              disabled={checkedIds.length !== 2}
+              className="rounded-md bg-violet-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Porównaj wybrane
+            </button>
+          </div>
+        ) : null}
+
         {reports === null ? (
           <p className="text-sm text-zinc-500">Ładowanie raportów…</p>
         ) : reports.length === 0 ? (
@@ -235,47 +285,90 @@ export function PatientRecords() {
             </p>
           </div>
         ) : (
-          <ul className="flex flex-col gap-3">
-            {reports.map((report) => (
-              <li key={report.id}>
-                <button
-                  type="button"
-                  onClick={() => openReport(report)}
-                  className="flex w-full items-start justify-between gap-4 rounded-lg border border-zinc-200 bg-white p-5 text-left transition-colors hover:border-zinc-300 hover:bg-zinc-50"
-                >
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-zinc-900 first-letter:uppercase">
-                      {formatDate(report.created_at)}
-                      <span className="ml-2 font-normal text-zinc-500">
-                        {formatTime(report.created_at)}
+          <ul className="relative flex flex-col gap-3 before:absolute before:bottom-5 before:left-[7px] before:top-5 before:w-px before:bg-zinc-300">
+            {reports.map((report) => {
+              const checked = checkedIds.includes(report.id);
+              const checkDisabled = !checked && checkedIds.length >= 2;
+              return (
+                <li key={report.id} className="relative pl-7">
+                  <span
+                    aria-hidden
+                    className={`absolute left-0 top-6 h-[15px] w-[15px] rounded-full border-2 ${
+                      checked
+                        ? "border-violet-600 bg-violet-600"
+                        : "border-zinc-400 bg-white"
+                    }`}
+                  />
+                  <div
+                    className={`flex w-full items-start gap-2 rounded-lg border bg-white transition-colors ${
+                      checked
+                        ? "border-violet-400"
+                        : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openReport(report)}
+                      className="min-w-0 flex-1 p-5 text-left"
+                    >
+                      <span className="block text-sm font-semibold text-zinc-900 first-letter:uppercase">
+                        {formatDate(report.created_at)}
+                        <span className="ml-2 font-normal text-zinc-500">
+                          {formatTime(report.created_at)}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block text-xs text-zinc-500">
+                        {patientId === null
+                          ? `${report.patient.first_name} ${report.patient.last_name}`
+                          : null}
+                        {patientId === null && report.doctor_name ? " · " : null}
+                        {report.doctor_name ?? null}
+                      </span>
+                      <span className="mt-2 line-clamp-2 block text-sm text-zinc-600">
+                        {report.notes || "Brak notatki."}
+                      </span>
+                    </button>
+                    <span className="flex shrink-0 flex-col items-end gap-2 p-5 pl-0">
+                      {patientId !== null && reports.length >= 2 ? (
+                        <label
+                          className={`flex items-center gap-1.5 text-xs font-medium ${
+                            checkDisabled
+                              ? "cursor-not-allowed text-zinc-400"
+                              : "cursor-pointer text-zinc-600"
+                          }`}
+                          title={
+                            checkDisabled
+                              ? "Można porównać tylko dwa raporty naraz"
+                              : "Zaznacz do porównania"
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={checkDisabled}
+                            onChange={() => toggleCompare(report.id)}
+                            className="h-3.5 w-3.5 accent-violet-700"
+                          />
+                          do porównania
+                        </label>
+                      ) : null}
+                      <span className="flex gap-2">
+                        {report.photos_count > 0 ? (
+                          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
+                            {report.photos_count}{" "}
+                            {plural(report.photos_count, "zdjęcie", "zdjęcia", "zdjęć")}
+                          </span>
+                        ) : null}
+                        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
+                          {report.findings_count}{" "}
+                          {plural(report.findings_count, "zmiana", "zmiany", "zmian")}
+                        </span>
                       </span>
                     </span>
-                    <span className="mt-0.5 block text-xs text-zinc-500">
-                      {patientId === null
-                        ? `${report.patient.first_name} ${report.patient.last_name}`
-                        : null}
-                      {patientId === null && report.doctor_name ? " · " : null}
-                      {report.doctor_name ?? null}
-                    </span>
-                    <span className="mt-2 line-clamp-2 block text-sm text-zinc-600">
-                      {report.notes || "Brak notatki."}
-                    </span>
-                  </span>
-                  <span className="flex shrink-0 gap-2">
-                    {report.photos_count > 0 ? (
-                      <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
-                        {report.photos_count}{" "}
-                        {plural(report.photos_count, "zdjęcie", "zdjęcia", "zdjęć")}
-                      </span>
-                    ) : null}
-                    <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
-                      {report.findings_count}{" "}
-                      {plural(report.findings_count, "zmiana", "zmiany", "zmian")}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            ))}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
