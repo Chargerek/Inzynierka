@@ -99,3 +99,76 @@ export type AdminUser = {
   phone: string | null;
   created_at: string;
 };
+
+export type BodySide = "front" | "back";
+
+export type BodyFigure = "male" | "female";
+
+export type AreaStroke = {
+  points: number[];
+  radius: number;
+};
+
+export type FindingGeometry =
+  | {
+      kind: "marker";
+      x: number;
+      y: number;
+    }
+  | {
+      kind: "area";
+      strokes: AreaStroke[];
+    }
+  | {
+      kind: "part";
+      part: string;
+    };
+
+export type FindingPhoto = {
+  id: number;
+  mime: string;
+};
+
+export type SkinFinding = {
+  id: number;
+  patient_id: number;
+  report_id: number | null;
+  appointment_id: number | null;
+  side: BodySide;
+  geometry: FindingGeometry;
+  color: string;
+  finding_type: string;
+  description: string;
+  created_at: string;
+  photos: FindingPhoto[];
+};
+
+export type DoctorPatient = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  reports_count: number;
+  last_report_at: string | null;
+};
+
+export type ReportPhoto = {
+  id: number;
+  mime: string;
+};
+
+export type ReportSummary = {
+  id: number;
+  patient: PatientSummary;
+  doctor_name: string | null;
+  body_figure: BodyFigure;
+  notes: string;
+  findings_count: number;
+  photos_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MedicalReport = ReportSummary & {
+  findings: SkinFinding[];
+  photos: ReportPhoto[];
+};

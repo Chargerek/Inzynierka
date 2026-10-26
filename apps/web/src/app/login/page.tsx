@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { ApiError } from "@/lib/api";
@@ -22,10 +22,11 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (user) {
-    router.replace(HOME_BY_ROLE[user.role]);
-    return null;
-  }
+  useEffect(() => {
+    if (user) router.replace(HOME_BY_ROLE[user.role]);
+  }, [user, router]);
+
+  if (user) return null;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -268,12 +268,19 @@ Checklista:
 **Feature:** dermatolog zaznacza zmiany, zapis + opcjonalnie zdjęcie.
 
 Checklista:
-- [ ] Assety przód/tył w `apps/web/public/body/`
-- [ ] Canvas Konva: zaznaczanie, kolor, typ, opis
-- [ ] API CRUD `SkinFinding` (geometry JSON)
-- [ ] Upload zdjęcia do finding
-- [ ] Zoom/pan (mysz + touch)
-- [ ] Lista findings + podświetlenie na mapie
+- [x] Assety przód/tył w `apps/web/public/body/`
+- [x] Canvas Konva: zaznaczanie, kolor, typ, opis
+- [x] Malowanie obszaru zmiany pędzlem (np. wysypka na całej części kończyny)
+- [x] Zaznaczanie części ciała jednym kliknięciem (tryb Część ciała: głowa, klatka, kończyny L/P…)
+- [x] Strefy części ciała jako wielokąty dopasowane do sylwetek (generator: `apps/web/scripts/generate-body-part-zones.py`)
+- [x] Sylwetki: jednolity kolor dłoni i stóp, gładkie kontury (bez „fal" po trace), naprawiony kciuk kobiecej sylwetki
+- [x] API CRUD `SkinFinding` (geometry JSON)
+- [x] Upload zdjęcia do finding
+- [x] Zdjęcia do całego raportu (upload, miniatury, usuwanie, kaskada przy usunięciu raportu)
+- [x] Zoom/pan (mysz + touch)
+- [x] Lista findings + podświetlenie na mapie
+- [x] Sylwetka kobieta / mężczyzna (wybór zapisywany w raporcie)
+- [x] Raporty (`MedicalReport`): kartoteka = lista raportów + wybór pacjenta; raport = notatka lekarska + zmiany na mapie
 
 **Test:** zaznacz → odśwież → jest; zdjęcie widać.  
 **Commit:** `feat: interaktywna mapa ciała 2D`
@@ -395,7 +402,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 5 — Rezerwacje REST API  
 - [x] Etap 6 — Auth UI  
 - [x] Etap 7 — Rezerwacje UI  
-- [ ] Etap 8 — Mapa ciała  
+- [x] Etap 8 — Mapa ciała  
 - [ ] Etap 9 — Historia / porównanie  
 - [ ] Etap 10 — E-mail (+ mailpit)  
 - [ ] Etap 11 — Bezpieczeństwo  
@@ -408,5 +415,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 8** — mapa ciała 2D.  
-Napisz „rób etap 8”, gdy mam iść dalej.
+**Etap 9** — historia dokumentacji / porównanie.  
+Napisz „rób etap 9”, gdy mam iść dalej.
