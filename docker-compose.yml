@@ -25,6 +25,9 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-inzynierka}:${POSTGRES_PASSWORD:-inzynierka}@db:5432/${POSTGRES_DB:-inzynierka}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-zmien-to-lokalnie}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      MAIL_FROM: ${MAIL_FROM:-Gabinet Dermatologiczny <noreply@gabinet.local>}
     ports:
       - "8000:8000"
     volumes:
@@ -32,6 +35,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: inzynierka-mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    restart: unless-stopped
 
   web:
     build:

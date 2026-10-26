@@ -103,3 +103,8 @@ class AppointmentRead(BaseModel):
     service: ServiceRead
     doctor: DoctorRead | None = None
     patient: PatientSummary | None = None
+
+
+class ReminderRunResult(BaseModel):
+    candidates: int
+    sent: int
