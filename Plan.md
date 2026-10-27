@@ -345,8 +345,15 @@ Checklista:
 
 ---
 
-### Etap 13 — Polish + dane demo na obronę
+### Etap 13 — Polish + dane demo na obronę ✅
 **Feature:** UI dopracowany, seed pokazowy, skrypt klikania.
+
+Checklista:
+- [x] Seed: pokazowa dokumentacja — Jan ma 2 raporty (trądzik: 3 zmiany zapalne → kontrola: 2 przebarwienia, gotowe pod porównanie), Maria raport ze znamionami na sylwetce żeńskiej; wizyty przeszła (zakończona) i przyszłe (potwierdzone), zawsze na dni robocze
+- [x] Czysta baza demo: reset wolumenu, śmieciowe konta i treści z testów usunięte (backup w %TEMP% przed resetem)
+- [x] UI: weryfikacja desktop + tablet (mapa skaluje się do szerokości), fix zawijania przycisków „Dodaj zdjęcie”
+- [x] Playwright: trzeci test — mapa na viewporcie tabletu (820×1180)
+- [x] `docs/demo-script.md` — skrypt klikania na 5 min
 
 **Test:** desktop + tablet (mapa); `docs/demo-script.md` na 5 min.  
 **Commit:** `chore: dopracowanie demo i dane na obronę`
@@ -416,7 +423,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 10 — E-mail (+ mailpit)  
 - [x] Etap 11 — Bezpieczeństwo  
 - [x] Etap 12 — Testy smoke  
-- [ ] Etap 13 — Polish demo  
+- [x] Etap 13 — Polish demo  
 - [ ] Etap 14 — Runbook Docker  
 - [ ] Etap 15 — Tekst pracy  
 
@@ -424,5 +431,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 13** — polish + dane demo na obronę.  
-Napisz „rób etap 13”, gdy mam iść dalej.
+**Etap 14** — pakiet demo (Docker na drugim laptopie).  
+Napisz „rób etap 14”, gdy mam iść dalej.
