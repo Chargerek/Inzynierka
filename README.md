@@ -55,6 +55,25 @@ docker compose down
 Skrót zasad (role, zgoda przy rejestracji, limity i weryfikacja uploadów, bcrypt):
 [docs/prywatnosc.md](docs/prywatnosc.md).
 
+## Testy
+
+API (pytest — jednostkowe i dymne HTTP na izolowanej bazie `inzynierka_test`):
+
+```powershell
+docker compose exec api python -m pytest tests/ -q
+```
+
+E2E (Playwright — rezerwacja i mapa ciała; wymaga działającego `docker compose up`):
+
+```powershell
+cd apps/web
+npx playwright install chromium   # tylko za pierwszym razem
+npm run test:e2e
+```
+
+Kolekcja API do importu w Postmanie/Insomni: [docs/openapi.json](docs/openapi.json)
+(eksport: `curl.exe -s http://localhost:8000/openapi.json -o docs/openapi.json`).
+
 ## Struktura
 
 ```

@@ -331,15 +331,16 @@ Checklista:
 
 ---
 
-### Etap 12 — Testy automatyczne (smoke)
+### Etap 12 — Testy automatyczne (smoke) ✅
 **Feature:** kilka testów pod rozdział o testach w pracy.
 
 Checklista:
-- [ ] pytest: sloty (overlapping)
-- [ ] Playwright: rezerwacja + mapa (smoke)
-- [ ] Postman lub export OpenAPI w `docs/` / `postman/`
+- [x] pytest: sloty (overlapping) — `test_booking.py` (kolizja, sąsiednie sloty, statusy)
+- [x] pytest: dymne HTTP przez TestClient na izolowanej bazie `inzynierka_test` (`test_api_smoke.py`): health, auth 401, rejestracja (zgoda 422 / duplikat 409 / login), cykl rezerwacji (201 → 409 konflikt → odwołanie → re-booking), termin poza godzinami, IDOR 403, lekarz bez wizyty 403, upload (.exe 415, 6 MB 413, JPEG 201)
+- [x] Playwright: rezerwacja przez kreator + mapa ciała w kartotece (smoke, sprzątanie wizyty przez API po teście)
+- [x] Export OpenAPI w `docs/openapi.json` (import do Postmana)
 
-**Test:** `pytest` i `npx playwright test` zielone lokalnie.  
+**Test:** `pytest` (49 zielonych) i `npx playwright test` (2 zielone) lokalnie.  
 **Commit:** `test: testy dymne API i ścieżek E2E`
 
 ---
@@ -414,7 +415,7 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 - [x] Etap 9 — Historia / porównanie  
 - [x] Etap 10 — E-mail (+ mailpit)  
 - [x] Etap 11 — Bezpieczeństwo  
-- [ ] Etap 12 — Testy smoke  
+- [x] Etap 12 — Testy smoke  
 - [ ] Etap 13 — Polish demo  
 - [ ] Etap 14 — Runbook Docker  
 - [ ] Etap 15 — Tekst pracy  
@@ -423,5 +424,5 @@ To wszystko robi **Etap 11** — nie zakładamy osobnego pliku „RODO.md” na 
 
 ## 8. Następny krok
 
-**Etap 12** — testy smoke (przejście kluczowych ścieżek przed demo).  
-Napisz „rób etap 12”, gdy mam iść dalej.
+**Etap 13** — polish + dane demo na obronę.  
+Napisz „rób etap 13”, gdy mam iść dalej.
