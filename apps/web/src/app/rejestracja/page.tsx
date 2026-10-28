@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { ApiError } from "@/lib/api";
+import type { Sex } from "@/lib/types";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -14,6 +15,7 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [sex, setSex] = useState<Sex | null>(null);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [consent, setConsent] = useState(false);
@@ -26,6 +28,10 @@ export default function RegisterPage() {
 
     if (password !== passwordConfirm) {
       setError("Hasła nie są takie same.");
+      return;
+    }
+    if (sex === null) {
+      setError("Wybierz płeć.");
       return;
     }
     if (!consent) {
@@ -41,6 +47,7 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
         phone: phone.trim() || null,
+        sex,
         consent_accepted: consent,
       });
       router.replace("/panel");
@@ -117,6 +124,37 @@ export default function RegisterPage() {
               placeholder="500 100 200"
             />
           </label>
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="text-sm font-medium text-zinc-700">Płeć</legend>
+            <div className="flex gap-2">
+              {(
+                [
+                  { value: "female", label: "Kobieta" },
+                  { value: "male", label: "Mężczyzna" },
+                ] as const
+              ).map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
+                    sex === option.value
+                      ? "border-violet-600 bg-violet-50 font-medium text-violet-900"
+                      : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="sex"
+                    required
+                    value={option.value}
+                    checked={sex === option.value}
+                    onChange={() => setSex(option.value)}
+                    className="sr-only"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700">
             Hasło
             <input

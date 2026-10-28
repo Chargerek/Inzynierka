@@ -50,6 +50,16 @@ test("pacjent rezerwuje wizytę przez kreator", async ({ page, request }) => {
     await expect(
       page.getByRole("heading", { name: "Wizyta zarezerwowana" }),
     ).toBeVisible();
+
+    // odwołanie przez dialog potwierdzający (sprzątanie po teście)
+    await page.goto("/panel");
+    await page.getByRole("button", { name: "Odwołaj" }).first().click();
+    const dialog = page.getByRole("dialog", { name: "Odwołać wizytę?" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText("Czy na pewno chcesz odwołać wizytę");
+    await dialog.getByRole("button", { name: "Tak, odwołaj" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText("Odwołana").first()).toBeVisible();
   } finally {
     const after = await appointmentIds();
     for (const id of after.filter((id) => !before.includes(id))) {

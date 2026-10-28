@@ -18,6 +18,7 @@ def _register_payload(**overrides):
         "password": "Demo123!",
         "first_name": "Nowy",
         "last_name": "Pacjent",
+        "sex": "female",
         "consent_accepted": True,
     }
     payload.update(overrides)
@@ -63,3 +64,12 @@ def test_register_requires_consent_field_present():
 def test_register_accepts_consent_true():
     request = RegisterRequest(**_register_payload())
     assert request.consent_accepted is True
+
+
+def test_register_requires_sex():
+    payload = _register_payload()
+    del payload["sex"]
+    with pytest.raises(ValidationError):
+        RegisterRequest(**payload)
+    with pytest.raises(ValidationError):
+        RegisterRequest(**_register_payload(sex="inne"))

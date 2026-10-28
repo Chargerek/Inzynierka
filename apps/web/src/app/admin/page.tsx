@@ -1,28 +1,35 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { useAuth, useAuthorizedFetch } from "@/features/auth/auth-context";
+import { useAuthorizedFetch } from "@/features/auth/auth-context";
 import { RoleGuard } from "@/features/auth/role-guard";
-import { ApiError } from "@/lib/api";
+import { AvailabilityEditor } from "@/features/availability/availability-editor";
+import { PatientRecords } from "@/features/findings/patient-records";
+import { ServicesManager } from "@/features/services/services-manager";
+import { ApiError, apiFetch } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
-import type { AdminUser, Service } from "@/lib/types";
+import type {
+  AdminCreateUserPayload,
+  AdminPatient,
+  AdminUser,
+  Doctor,
+  Sex,
+  UserRole,
+} from "@/lib/types";
 
-const ROLE_LABELS: Record<AdminUser["role"], string> = {
-  admin: "Administrator",
-  dermatologist: "Lekarz",
+const ROLE_LABELS: Record<UserRole, string> = {
   patient: "Pacjent",
+  dermatologist: "Lekarz",
+  admin: "Administrator",
 };
 
-const EMPTY_SERVICE_FORM = {
-  name: "",
-  duration_minutes: "30",
-  price: "",
+const SEX_LABELS: Record<Sex, string> = {
+  female: "Kobieta",
+  male: "Mężczyzna",
 };
 
-type ServiceFormState = typeof EMPTY_SERVICE_FORM;
-
-export default function AdminPanelPage() {
+export default function AdminPage() {
   return (
     <RoleGuard roles={["admin"]}>
       <AdminPanel />
@@ -31,8 +38,9 @@ export default function AdminPanelPage() {
 }
 
 function AdminPanel() {
-  const { user } = useAuth();
-  const [tab, setTab] = useState<"uslugi" | "uzytkownicy">("uslugi");
+  const [tab, setTab] = useState<
+    "uzytkownicy" | "lekarze" | "pacjenci" | "kartoteka" | "uslugi"
+  >("uzytkownicy");
 
   return (
     <div className="flex flex-1 flex-col">
@@ -42,13 +50,17 @@ function AdminPanel() {
             Panel administratora
           </h1>
           <p className="max-w-xl text-base leading-7 text-zinc-600">
-            Witaj, {user?.first_name} {user?.last_name}. Zarządzanie gabinetem.
+            Zarządzanie użytkownikami, lekarzami, pacjentami i usługami
+            gabinetu.
           </p>
-          <div className="mt-2 flex gap-1 rounded-lg bg-zinc-100 p-1 text-sm font-medium">
+          <div className="mt-2 flex flex-wrap justify-center gap-1 rounded-lg bg-zinc-100 p-1 text-sm font-medium">
             {(
               [
-                { id: "uslugi", label: "Usługi" },
                 { id: "uzytkownicy", label: "Użytkownicy" },
+                { id: "lekarze", label: "Lekarze" },
+                { id: "pacjenci", label: "Pacjenci" },
+                { id: "kartoteka", label: "Kartoteka" },
+                { id: "uslugi", label: "Usługi" },
               ] as const
             ).map((item) => (
               <button
@@ -69,303 +81,267 @@ function AdminPanel() {
       </section>
 
       <section className="mx-auto w-full max-w-5xl px-4 py-16">
-        {tab === "uslugi" ? <ServicesManager /> : <UsersTable />}
+        {tab === "uzytkownicy" ? (
+          <UsersTab />
+        ) : tab === "lekarze" ? (
+          <DoctorsTab />
+        ) : tab === "pacjenci" ? (
+          <PatientsTab />
+        ) : tab === "kartoteka" ? (
+          <PatientRecords />
+        ) : (
+          <ServicesManager />
+        )}
       </section>
     </div>
   );
 }
 
-function ServicesManager() {
-  const authorizedFetch = useAuthorizedFetch();
-  const [services, setServices] = useState<Service[] | null>(null);
-  const [form, setForm] = useState<ServiceFormState>(EMPTY_SERVICE_FORM);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+/* ------------------------------- Użytkownicy ------------------------------ */
 
-  const loadServices = useCallback(() => {
-    authorizedFetch<Service[]>("/services")
-      .then(setServices)
-      .catch(() => setError("Nie udało się pobrać listy usług."));
-  }, [authorizedFetch]);
-
-  useEffect(() => {
-    loadServices();
-  }, [loadServices]);
-
-  const resetForm = () => {
-    setForm(EMPTY_SERVICE_FORM);
-    setEditingId(null);
-  };
-
-  const startEdit = (service: Service) => {
-    setEditingId(service.id);
-    setForm({
-      name: service.name,
-      duration_minutes: String(service.duration_minutes),
-      price: service.price,
-    });
-    setError(null);
-    setMessage(null);
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setMessage(null);
-
-    const duration = Number.parseInt(form.duration_minutes, 10);
-    if (!form.name.trim()) {
-      setError("Nazwa usługi jest wymagana.");
-      return;
-    }
-    if (!Number.isFinite(duration) || duration <= 0) {
-      setError("Czas trwania musi być dodatnią liczbą minut.");
-      return;
-    }
-    if (!form.price || Number(form.price) < 0) {
-      setError("Cena musi być nieujemną liczbą.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const body = {
-        name: form.name.trim(),
-        duration_minutes: duration,
-        price: form.price,
-      };
-      if (editingId === null) {
-        await authorizedFetch("/services", { method: "POST", body });
-        setMessage("Usługa została dodana.");
-      } else {
-        await authorizedFetch(`/services/${editingId}`, {
-          method: "PUT",
-          body,
-        });
-        setMessage("Usługa została zaktualizowana.");
-      }
-      resetForm();
-      loadServices();
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Nie udało się zapisać usługi.",
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (service: Service) => {
-    if (!window.confirm(`Czy na pewno usunąć usługę „${service.name}"?`)) {
-      return;
-    }
-    setError(null);
-    setMessage(null);
-    try {
-      await authorizedFetch(`/services/${service.id}`, { method: "DELETE" });
-      setMessage("Usługa została usunięta.");
-      if (editingId === service.id) {
-        resetForm();
-      }
-      loadServices();
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Nie udało się usunąć usługi.",
-      );
-    }
-  };
-
+function UsersTab() {
+  const [refreshKey, setRefreshKey] = useState(0);
   return (
-    <div className="flex flex-col gap-8">
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-lg border border-zinc-200 bg-white p-6"
-      >
-        <h2 className="text-xl font-semibold text-zinc-900">
-          {editingId === null ? "Dodaj usługę" : "Edytuj usługę"}
-        </h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label
-              htmlFor="service-name"
-              className="text-sm font-medium text-zinc-900"
-            >
-              Nazwa
-            </label>
-            <input
-              id="service-name"
-              type="text"
-              required
-              value={form.name}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, name: event.target.value }))
-              }
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="service-duration"
-              className="text-sm font-medium text-zinc-900"
-            >
-              Czas trwania (min)
-            </label>
-            <input
-              id="service-duration"
-              type="number"
-              min={1}
-              required
-              value={form.duration_minutes}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  duration_minutes: event.target.value,
-                }))
-              }
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="service-price"
-              className="text-sm font-medium text-zinc-900"
-            >
-              Cena (zł)
-            </label>
-            <input
-              id="service-price"
-              type="number"
-              min={0}
-              step="0.01"
-              required
-              value={form.price}
-              onChange={(event) =>
-                setForm((current) => ({
-                  ...current,
-                  price: event.target.value,
-                }))
-              }
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-            />
-          </div>
-        </div>
-
-        {error ? (
-          <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </p>
-        ) : null}
-        {message ? (
-          <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {message}
-          </p>
-        ) : null}
-
-        <div className="mt-6 flex justify-end gap-3">
-          {editingId !== null ? (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="rounded-md border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
-            >
-              Anuluj edycję
-            </button>
-          ) : null}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-md bg-violet-700 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting
-              ? "Zapisywanie…"
-              : editingId === null
-                ? "Dodaj usługę"
-                : "Zapisz zmiany"}
-          </button>
-        </div>
-      </form>
-
-      <div className="rounded-lg border border-zinc-200 bg-white p-6">
-        <h2 className="text-xl font-semibold text-zinc-900">Lista usług</h2>
-        {services === null ? (
-          <p className="mt-4 text-sm text-zinc-500">Ładowanie…</p>
-        ) : services.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">Brak usług.</p>
-        ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 text-zinc-500">
-                  <th className="py-2 pr-4 font-medium">Nazwa</th>
-                  <th className="py-2 pr-4 font-medium">Czas</th>
-                  <th className="py-2 pr-4 font-medium">Cena</th>
-                  <th className="py-2 font-medium">
-                    <span className="sr-only">Akcje</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {services.map((service) => (
-                  <tr
-                    key={service.id}
-                    className="border-b border-zinc-100 last:border-0"
-                  >
-                    <td className="py-3 pr-4 text-zinc-900">{service.name}</td>
-                    <td className="py-3 pr-4 text-zinc-600">
-                      {service.duration_minutes} min
-                    </td>
-                    <td className="py-3 pr-4 text-zinc-600">
-                      {Number(service.price).toFixed(2)} zł
-                    </td>
-                    <td className="py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(service)}
-                        className="mr-2 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
-                      >
-                        Edytuj
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(service)}
-                        className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50"
-                      >
-                        Usuń
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col gap-10">
+      <CreateUserForm onCreated={() => setRefreshKey((key) => key + 1)} />
+      <UsersTable refreshKey={refreshKey} />
     </div>
   );
 }
 
-function UsersTable() {
+function CreateUserForm({ onCreated }: { onCreated: () => void }) {
+  const authorizedFetch = useAuthorizedFetch();
+  const [role, setRole] = useState<UserRole>("dermatologist");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [sex, setSex] = useState<"" | Sex>("");
+  const [specialization, setSpecialization] = useState("Dermatologia");
+  const [bio, setBio] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const inputClass =
+    "mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500";
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    setMessage(null);
+    setLoading(true);
+
+    const payload: AdminCreateUserPayload = {
+      email: email.trim(),
+      password,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      role,
+    };
+    if (phone.trim()) payload.phone = phone.trim();
+    if (sex) payload.sex = sex;
+    if (role === "dermatologist") {
+      payload.specialization = specialization.trim() || "Dermatologia";
+      if (bio.trim()) payload.bio = bio.trim();
+    }
+
+    try {
+      const created = await authorizedFetch<AdminUser>("/admin/users", {
+        method: "POST",
+        body: payload,
+      });
+      setMessage(
+        `Utworzono konto ${ROLE_LABELS[created.role].toLowerCase()}: ${created.email}`,
+      );
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPhone("");
+      setPassword("");
+      setSex("");
+      setBio("");
+      onCreated();
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Nie udało się utworzyć konta.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={submit}
+      className="rounded-lg border border-zinc-200 bg-white p-6"
+    >
+      <h2 className="text-lg font-semibold text-zinc-900">
+        Utwórz nowe konto
+      </h2>
+      <p className="mt-1 text-sm text-zinc-500">
+        Konto jest aktywne od razu — przekaż dane logowania użytkownikowi.
+      </p>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-medium text-zinc-700">
+          Rola
+          <select
+            value={role}
+            onChange={(event) => setRole(event.target.value as UserRole)}
+            className={inputClass}
+          >
+            <option value="dermatologist">Lekarz</option>
+            <option value="patient">Pacjent</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </label>
+        <label className="block text-sm font-medium text-zinc-700">
+          E-mail
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className={inputClass}
+          />
+        </label>
+        <label className="block text-sm font-medium text-zinc-700">
+          Imię
+          <input
+            type="text"
+            required
+            value={firstName}
+            onChange={(event) => setFirstName(event.target.value)}
+            className={inputClass}
+          />
+        </label>
+        <label className="block text-sm font-medium text-zinc-700">
+          Nazwisko
+          <input
+            type="text"
+            required
+            value={lastName}
+            onChange={(event) => setLastName(event.target.value)}
+            className={inputClass}
+          />
+        </label>
+        <label className="block text-sm font-medium text-zinc-700">
+          Hasło
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className={inputClass}
+            aria-describedby="admin-user-password-hint"
+          />
+          <span
+            id="admin-user-password-hint"
+            className="mt-1 block text-xs font-normal text-zinc-500"
+          >
+            Min. 8 znaków, w tym duża litera i cyfra.
+          </span>
+        </label>
+        <label className="block text-sm font-medium text-zinc-700">
+          Telefon (opcjonalnie)
+          <input
+            type="tel"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            className={inputClass}
+          />
+        </label>
+        <label className="block text-sm font-medium text-zinc-700">
+          Płeć (opcjonalnie)
+          <select
+            value={sex}
+            onChange={(event) => setSex(event.target.value as "" | Sex)}
+            className={inputClass}
+          >
+            <option value="">Nie podano</option>
+            <option value="female">Kobieta</option>
+            <option value="male">Mężczyzna</option>
+          </select>
+        </label>
+        {role === "dermatologist" ? (
+          <>
+            <label className="block text-sm font-medium text-zinc-700">
+              Specjalizacja
+              <input
+                type="text"
+                value={specialization}
+                onChange={(event) => setSpecialization(event.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className="block text-sm font-medium text-zinc-700 sm:col-span-2">
+              Bio (opcjonalnie)
+              <textarea
+                value={bio}
+                onChange={(event) => setBio(event.target.value)}
+                rows={2}
+                className={inputClass}
+              />
+            </label>
+          </>
+        ) : null}
+      </div>
+
+      {error ? (
+        <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          {message}
+        </p>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="mt-4 rounded-md bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {loading ? "Tworzenie…" : "Utwórz konto"}
+      </button>
+    </form>
+  );
+}
+
+function UsersTable({ refreshKey }: { refreshKey: number }) {
   const authorizedFetch = useAuthorizedFetch();
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     authorizedFetch<AdminUser[]>("/admin/users")
-      .then(setUsers)
-      .catch((err: unknown) =>
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : "Nie udało się pobrać listy użytkowników.",
-        ),
-      );
-  }, [authorizedFetch]);
+      .then((data) => {
+        if (active) {
+          setUsers(data);
+          setError(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (active) {
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : "Nie udało się pobrać użytkowników.",
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [authorizedFetch, refreshKey]);
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-6">
-      <h2 className="text-xl font-semibold text-zinc-900">Użytkownicy</h2>
+    <div>
+      <h2 className="text-lg font-semibold text-zinc-900">Konta użytkowników</h2>
       {error ? (
         <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -373,34 +349,242 @@ function UsersTable() {
       ) : null}
       {users === null ? (
         <p className="mt-4 text-sm text-zinc-500">Ładowanie…</p>
+      ) : users.length === 0 ? (
+        <p className="mt-4 text-sm text-zinc-500">Brak użytkowników.</p>
       ) : (
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
           <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 text-zinc-500">
-                <th className="py-2 pr-4 font-medium">Imię i nazwisko</th>
-                <th className="py-2 pr-4 font-medium">E-mail</th>
-                <th className="py-2 pr-4 font-medium">Rola</th>
-                <th className="py-2 font-medium">Utworzono</th>
+            <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
+              <tr>
+                <th className="px-4 py-3 font-medium">Użytkownik</th>
+                <th className="px-4 py-3 font-medium">E-mail</th>
+                <th className="px-4 py-3 font-medium">Rola</th>
+                <th className="px-4 py-3 font-medium">Utworzono</th>
               </tr>
             </thead>
-            <tbody>
-              {users.map((item) => (
-                <tr
-                  key={item.id}
-                  className="border-b border-zinc-100 last:border-0"
-                >
-                  <td className="py-3 pr-4 text-zinc-900">
-                    {item.first_name} {item.last_name}
+            <tbody className="divide-y divide-zinc-100">
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td className="px-4 py-3 font-medium text-zinc-900">
+                    {user.first_name} {user.last_name}
                   </td>
-                  <td className="py-3 pr-4 text-zinc-600">{item.email}</td>
-                  <td className="py-3 pr-4">
-                    <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
-                      {ROLE_LABELS[item.role]}
-                    </span>
+                  <td className="px-4 py-3 text-zinc-600">{user.email}</td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {ROLE_LABELS[user.role]}
                   </td>
-                  <td className="py-3 text-zinc-600">
-                    {formatDateTime(item.created_at)}
+                  <td className="px-4 py-3 text-zinc-600">
+                    {formatDateTime(user.created_at)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* --------------------------------- Lekarze -------------------------------- */
+
+function DoctorsTab() {
+  const authorizedFetch = useAuthorizedFetch();
+  const [doctors, setDoctors] = useState<Doctor[] | null>(null);
+  const [emails, setEmails] = useState<Map<number, string>>(new Map());
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      apiFetch<Doctor[]>("/doctors"),
+      authorizedFetch<AdminUser[]>("/admin/users"),
+    ])
+      .then(([doctorList, userList]) => {
+        if (!active) return;
+        setDoctors(doctorList);
+        setEmails(new Map(userList.map((user) => [user.id, user.email])));
+        setSelectedId((current) => current ?? doctorList[0]?.id ?? null);
+      })
+      .catch((err: unknown) => {
+        if (active) {
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : "Nie udało się pobrać lekarzy.",
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [authorizedFetch]);
+
+  const selected = useMemo(
+    () => doctors?.find((doctor) => doctor.id === selectedId) ?? null,
+    [doctors, selectedId],
+  );
+
+  if (error) {
+    return (
+      <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {error}
+      </p>
+    );
+  }
+
+  if (doctors === null) {
+    return <p className="text-sm text-zinc-500">Ładowanie lekarzy…</p>;
+  }
+
+  if (doctors.length === 0) {
+    return (
+      <p className="text-sm text-zinc-500">
+        Brak lekarzy. Utwórz konto lekarza w zakładce „Użytkownicy”.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-wrap gap-2">
+        {doctors.map((doctor) => (
+          <button
+            key={doctor.id}
+            type="button"
+            onClick={() => setSelectedId(doctor.id)}
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+              selectedId === doctor.id
+                ? "border-violet-600 bg-violet-600 text-white"
+                : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100"
+            }`}
+          >
+            {doctor.first_name} {doctor.last_name}
+          </button>
+        ))}
+      </div>
+
+      {selected ? (
+        <div className="flex flex-col gap-8">
+          <div className="rounded-lg border border-zinc-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-zinc-900">
+              {selected.first_name} {selected.last_name}
+            </h2>
+            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-zinc-500">E-mail</dt>
+                <dd className="font-medium text-zinc-900">
+                  {emails.get(selected.user_id) ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-zinc-500">Specjalizacja</dt>
+                <dd className="font-medium text-zinc-900">
+                  {selected.specialization}
+                </dd>
+              </div>
+            </dl>
+            {selected.bio ? (
+              <p className="mt-3 text-sm leading-6 text-zinc-600">
+                {selected.bio}
+              </p>
+            ) : null}
+          </div>
+
+          <AvailabilityEditor key={selected.id} doctor={selected} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/* --------------------------------- Pacjenci ------------------------------- */
+
+function PatientsTab() {
+  const authorizedFetch = useAuthorizedFetch();
+  const [patients, setPatients] = useState<AdminPatient[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    authorizedFetch<AdminPatient[]>("/admin/patients")
+      .then((data) => {
+        if (active) {
+          setPatients(data);
+          setError(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (active) {
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : "Nie udało się pobrać pacjentów.",
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [authorizedFetch]);
+
+  const formatDate = (value: string | null) =>
+    value ? new Date(value).toLocaleDateString("pl-PL") : "—";
+
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-zinc-900">Pacjenci gabinetu</h2>
+      <p className="mt-1 text-sm text-zinc-500">
+        Podgląd kont pacjentów w razie zgłoszonych problemów.
+      </p>
+      {error ? (
+        <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+      {patients === null ? (
+        <p className="mt-4 text-sm text-zinc-500">Ładowanie…</p>
+      ) : patients.length === 0 ? (
+        <p className="mt-4 text-sm text-zinc-500">Brak pacjentów.</p>
+      ) : (
+        <div className="mt-4 overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-zinc-200 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
+              <tr>
+                <th className="px-4 py-3 font-medium">Pacjent</th>
+                <th className="px-4 py-3 font-medium">E-mail</th>
+                <th className="px-4 py-3 font-medium">Telefon</th>
+                <th className="px-4 py-3 font-medium">Płeć</th>
+                <th className="px-4 py-3 font-medium">Data ur.</th>
+                <th className="px-4 py-3 font-medium">Wizyty</th>
+                <th className="px-4 py-3 font-medium">Raporty</th>
+                <th className="px-4 py-3 font-medium">Konto od</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {patients.map((patient) => (
+                <tr key={patient.id}>
+                  <td className="px-4 py-3 font-medium text-zinc-900">
+                    {patient.first_name} {patient.last_name}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">{patient.email}</td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {patient.phone ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {patient.sex ? SEX_LABELS[patient.sex] : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {formatDate(patient.birth_date)}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {patient.appointments_count}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {patient.reports_count}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {formatDate(patient.created_at)}
                   </td>
                 </tr>
               ))}

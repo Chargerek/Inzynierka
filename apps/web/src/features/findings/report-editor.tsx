@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuthorizedFetch } from "@/features/auth/auth-context";
 import { ApiError } from "@/lib/api";
@@ -199,6 +199,11 @@ export function ReportEditor({
   };
 
   const handleMarkerClick = (finding: SkinFinding) => {
+    if (finding.id === selectedId) {
+      setSelectedId(null);
+      resetEditor();
+      return;
+    }
     setSelectedId(finding.id);
     setEditingId(finding.id);
     setAddingMode(false);
@@ -304,7 +309,14 @@ export function ReportEditor({
     }
   };
 
-  const editorOpen = addingMode || editingId !== null;
+  const listRef = useRef<HTMLUListElement | null>(null);
+
+  useEffect(() => {
+    if (selectedId === null) return;
+    listRef.current
+      ?.querySelector(`[data-finding-id="${selectedId}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [selectedId]);
 
   if (loading) {
     return <p className="text-sm text-zinc-500">Ładowanie raportu…</p>;
@@ -509,39 +521,31 @@ export function ReportEditor({
               </button>
             </div>
 
-            {editorOpen ? (
+            {addingMode ? (
               <FindingForm
-                title={addingMode ? "Nowa zmiana skórna" : "Edytuj zmianę"}
+                title="Nowa zmiana skórna"
                 hint={
-                  addingMode
-                    ? drawTool === "brush"
-                      ? pendingStrokes.length > 0
-                        ? `Obszar pomalowany (${side === "front" ? "przód" : "tył"}). Uzupełnij dane poniżej.`
-                        : "Przeciągnij po sylwetce, aby pomalować obszar zmiany."
-                      : drawTool === "part"
-                        ? pendingPart
-                          ? `Zaznaczono: ${bodyPartLabel(pendingPart)} (${side === "front" ? "przód" : "tył"}). Uzupełnij dane poniżej.`
-                          : "Kliknij część ciała na sylwetce."
-                        : pendingPoint
-                          ? `Punkt zaznaczony (${side === "front" ? "przód" : "tył"}). Uzupełnij dane poniżej.`
-                          : "Kliknij na sylwetkę miejsce zmiany."
-                    : null
+                  drawTool === "brush"
+                    ? pendingStrokes.length > 0
+                      ? `Obszar pomalowany (${side === "front" ? "przód" : "tył"}). Uzupełnij dane poniżej.`
+                      : "Przeciągnij po sylwetce, aby pomalować obszar zmiany."
+                    : drawTool === "part"
+                      ? pendingPart
+                        ? `Zaznaczono: ${bodyPartLabel(pendingPart)} (${side === "front" ? "przód" : "tył"}). Uzupełnij dane poniżej.`
+                        : "Kliknij część ciała na sylwetce."
+                      : pendingPoint
+                        ? `Punkt zaznaczony (${side === "front" ? "przód" : "tył"}). Uzupełnij dane poniżej.`
+                        : "Kliknij na sylwetkę miejsce zmiany."
                 }
                 form={form}
                 onChange={setForm}
                 onCancel={resetEditor}
-                onSave={addingMode ? handleSaveNew : handleSaveEdit}
+                onSave={handleSaveNew}
                 saveDisabled={
                   saving ||
-                  (addingMode &&
-                    drawTool === "point" &&
-                    !pendingPoint) ||
-                  (addingMode &&
-                    drawTool === "brush" &&
-                    pendingStrokes.length === 0) ||
-                  (addingMode &&
-                    drawTool === "part" &&
-                    !pendingPart)
+                  (drawTool === "point" && !pendingPoint) ||
+                  (drawTool === "brush" && pendingStrokes.length === 0) ||
+                  (drawTool === "part" && !pendingPart)
                 }
                 saving={saving}
               />
@@ -553,11 +557,11 @@ export function ReportEditor({
                 miejsce na sylwetce.
               </p>
             ) : (
-              <ul className="divide-y divide-zinc-100">
+              <ul ref={listRef} className="divide-y divide-zinc-100">
                 {findings.map((finding) => {
                   const isSelected = finding.id === selectedId;
                   return (
-                    <li key={finding.id}>
+                    <li key={finding.id} data-finding-id={finding.id}>
                       <div
                         className={`flex items-start gap-3 px-5 py-4 transition-colors ${
                           isSelected ? "bg-violet-50" : "hover:bg-zinc-50"
@@ -566,8 +570,26 @@ export function ReportEditor({
                         <button
                           type="button"
                           onClick={() => handleMarkerClick(finding)}
+                          aria-expanded={isSelected}
+                          title={
+                            isSelected ? "Zwiń zmianę" : "Rozwiń zmianę"
+                          }
                           className="flex min-w-0 flex-1 items-start gap-3 text-left"
                         >
+                          <svg
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            className={`mt-0.5 h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
+                              isSelected ? "rotate-90" : ""
+                            }`}
+                            aria-hidden="true"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M7.21 14.77a.75.75 0 01.02-1.06L11.17 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
                           <span
                             className="mt-1 h-4 w-4 shrink-0 rounded-full border border-white shadow"
                             style={{ backgroundColor: finding.color }}
@@ -583,6 +605,11 @@ export function ReportEditor({
                               <span className="ml-2 text-xs font-normal text-zinc-500">
                                 {finding.side === "front" ? "przód" : "tył"}
                               </span>
+                              {finding.photos.length > 0 ? (
+                                <span className="ml-2 text-xs font-normal text-zinc-500">
+                                  {photosLabel(finding.photos.length)}
+                                </span>
+                              ) : null}
                             </span>
                             {finding.description ? (
                               <span className="mt-0.5 block truncate text-sm text-zinc-600">
@@ -600,10 +627,26 @@ export function ReportEditor({
                         </button>
                       </div>
                       {isSelected && report ? (
-                        <FindingPhotos
-                          finding={finding}
-                          onChanged={() => reloadReport(report.id)}
-                        />
+                        <div>
+                          <FindingForm
+                            title="Edytuj zmianę"
+                            hint={null}
+                            form={form}
+                            onChange={setForm}
+                            onCancel={() => {
+                              resetEditor();
+                              setSelectedId(null);
+                            }}
+                            onSave={handleSaveEdit}
+                            saveDisabled={saving}
+                            saving={saving}
+                          />
+                          <FindingPhotos
+                            key={finding.id}
+                            finding={finding}
+                            onChanged={() => reloadReport(report.id)}
+                          />
+                        </div>
                       ) : null}
                     </li>
                   );
@@ -615,6 +658,16 @@ export function ReportEditor({
       </div>
     </div>
   );
+}
+
+function photosLabel(count: number): string {
+  if (count === 1) return "1 zdjęcie";
+  const tens = count % 10;
+  const hundreds = count % 100;
+  if (tens >= 2 && tens <= 4 && (hundreds < 12 || hundreds > 14)) {
+    return `${count} zdjęcia`;
+  }
+  return `${count} zdjęć`;
 }
 
 function SegmentedControl<T extends string>({

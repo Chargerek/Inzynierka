@@ -19,7 +19,7 @@ def list_services(db: Session = Depends(get_db)):
     "",
     response_model=ServiceRead,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(require_role(UserRole.ADMIN))],
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.DERMATOLOGIST))],
 )
 def create_service(body: ServiceUpsertRequest, db: Session = Depends(get_db)):
     service = Service(
@@ -36,7 +36,7 @@ def create_service(body: ServiceUpsertRequest, db: Session = Depends(get_db)):
 @router.put(
     "/{service_id}",
     response_model=ServiceRead,
-    dependencies=[Depends(require_role(UserRole.ADMIN))],
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.DERMATOLOGIST))],
 )
 def update_service(
     service_id: int,
@@ -60,7 +60,7 @@ def update_service(
 @router.delete(
     "/{service_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_role(UserRole.ADMIN))],
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.DERMATOLOGIST))],
 )
 def delete_service(service_id: int, db: Session = Depends(get_db)):
     service = db.scalar(select(Service).where(Service.id == service_id))

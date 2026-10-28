@@ -13,6 +13,7 @@ from app.models import (
     MedicalReport,
     PatientProfile,
     Service,
+    Sex,
     SkinFinding,
     User,
     UserRole,
@@ -40,6 +41,7 @@ USERS = [
         "role": UserRole.PATIENT,
         "first_name": "Jan",
         "last_name": "Nowak",
+        "sex": Sex.MALE,
         "birth_date": date(1990, 4, 12),
     },
     {
@@ -47,6 +49,7 @@ USERS = [
         "role": UserRole.PATIENT,
         "first_name": "Maria",
         "last_name": "Wiśniewska",
+        "sex": Sex.FEMALE,
         "birth_date": date(1985, 11, 3),
     },
 ]
@@ -69,6 +72,7 @@ def seed() -> None:
                 first_name=item["first_name"],
                 last_name=item["last_name"],
                 phone=item.get("phone"),
+                sex=item.get("sex"),
                 consent_at=consent_at,
             )
             session.add(user)

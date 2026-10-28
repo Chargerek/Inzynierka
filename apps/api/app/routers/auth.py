@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.passwords import hash_password, verify_password
 from app.core.security import create_access_token, get_current_user, require_role
 from app.db.dependencies import get_db
-from app.models import DoctorProfile, PatientProfile, User, UserRole
+from app.models import DoctorProfile, PatientProfile, Sex, User, UserRole
 from app.schemas.auth import (
     DoctorCreateRequest,
     LoginRequest,
@@ -37,6 +37,7 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
         first_name=body.first_name,
         last_name=body.last_name,
         phone=body.phone,
+        sex=Sex(body.sex),
         consent_at=datetime.now(timezone.utc),
     )
     db.add(user)

@@ -246,6 +246,7 @@ def list_doctor_patients(
             id=patient.id,
             first_name=patient.user.first_name,
             last_name=patient.user.last_name,
+            sex=patient.user.sex.value if patient.user.sex else None,
             reports_count=reports_count or 0,
             last_report_at=last_report_at,
         )

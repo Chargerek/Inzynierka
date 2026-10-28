@@ -35,7 +35,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/rejestracja"
+              href="/panel/umow"
               className="rounded-md bg-violet-700 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-violet-600"
             >
               Umów wizytę

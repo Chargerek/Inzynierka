@@ -66,7 +66,7 @@ def clinic(db_session: Session) -> dict[str, int]:
     return {"doctor_id": doctor.id, "service_id": service.id}
 
 
-def _register_patient(client: TestClient) -> tuple[str, str]:
+def _register_patient(client: TestClient, sex: str = "female") -> tuple[str, str]:
     email = f"pacjent.{uuid4().hex[:8]}@gabinet.pl"
     response = client.post(
         "/auth/register",
@@ -75,6 +75,7 @@ def _register_patient(client: TestClient) -> tuple[str, str]:
             "password": DEMO_PASSWORD,
             "first_name": "Test",
             "last_name": "Pacjent",
+            "sex": sex,
             "consent_accepted": True,
         },
     )
@@ -161,6 +162,31 @@ def test_register_validation(client: TestClient):
     assert consent_false.status_code == 422
     assert "Zgoda" in consent_false.text
 
+    without_sex = client.post(
+        "/auth/register",
+        json={
+            "email": "bez.plci@gabinet.pl",
+            "password": DEMO_PASSWORD,
+            "first_name": "Bez",
+            "last_name": "Płci",
+            "consent_accepted": True,
+        },
+    )
+    assert without_sex.status_code == 422
+
+    bad_sex = client.post(
+        "/auth/register",
+        json={
+            "email": "zla.plec@gabinet.pl",
+            "password": DEMO_PASSWORD,
+            "first_name": "Zła",
+            "last_name": "Płeć",
+            "sex": "inne",
+            "consent_accepted": True,
+        },
+    )
+    assert bad_sex.status_code == 422
+
 
 def test_register_login_me_and_duplicates(client: TestClient):
     email, password = _register_patient(client)
@@ -172,6 +198,7 @@ def test_register_login_me_and_duplicates(client: TestClient):
             "password": password,
             "first_name": "Drugi",
             "last_name": "Konto",
+            "sex": "male",
             "consent_accepted": True,
         },
     )
@@ -182,6 +209,7 @@ def test_register_login_me_and_duplicates(client: TestClient):
     assert me.status_code == 200
     assert me.json()["email"] == email
     assert me.json()["role"] == "patient"
+    assert me.json()["sex"] == "female"
 
     wrong_password = client.post(
         "/auth/login", json={"email": email, "password": "zle-haslo1"}
@@ -252,6 +280,20 @@ def test_doctor_without_appointment_gets_403(
     response = client.get(f"/reports?patient_id={profile_id}", headers=doctor_headers)
     assert response.status_code == 403
     assert "nie jest Twoim pacjentem" in response.text
+
+
+def test_doctor_patient_list_contains_sex(
+    client: TestClient, db_session: Session, clinic: dict[str, int]
+):
+    email, _ = _register_patient(client, sex="female")
+    profile_id = _patient_profile_id(db_session, email)
+    _give_doctor_appointment(db_session, clinic, profile_id)
+    doctor_headers = _login(client, "dr.test@gabinet.pl")
+
+    response = client.get("/doctor/patients", headers=doctor_headers)
+    assert response.status_code == 200
+    entry = next(p for p in response.json() if p["id"] == profile_id)
+    assert entry["sex"] == "female"
 
 
 def _give_doctor_appointment(
@@ -327,3 +369,146 @@ def test_upload_limits_and_content_sniffing(
         f"/findings/{finding_id}/photos/{photo_id}", headers=doctor_headers
     )
     assert deleted.status_code == 204
+
+
+def _make_admin(db_session: Session) -> str:
+    user = User(
+        email="admin.test@gabinet.pl",
+        password_hash=hash_password(DEMO_PASSWORD),
+        role=UserRole.ADMIN,
+        first_name="Adam",
+        last_name="Admin",
+        consent_at=datetime.now(timezone.utc),
+    )
+    db_session.add(user)
+    db_session.commit()
+    return user.email
+
+
+def test_admin_creates_users(client: TestClient, db_session: Session):
+    _make_admin(db_session)
+    admin_headers = _login(client, "admin.test@gabinet.pl")
+
+    doctor = client.post(
+        "/admin/users",
+        headers=admin_headers,
+        json={
+            "email": "nowy.lekarz@gabinet.pl",
+            "password": DEMO_PASSWORD,
+            "first_name": "Nowy",
+            "last_name": "Lekarz",
+            "role": "dermatologist",
+        },
+    )
+    assert doctor.status_code == 201, doctor.text
+    assert doctor.json()["role"] == "dermatologist"
+    # nowy lekarz może się zalogować
+    _login(client, "nowy.lekarz@gabinet.pl")
+
+    patient = client.post(
+        "/admin/users",
+        headers=admin_headers,
+        json={
+            "email": "nowy.pacjent@gabinet.pl",
+            "password": DEMO_PASSWORD,
+            "first_name": "Nowa",
+            "last_name": "Pacjentka",
+            "role": "patient",
+            "sex": "female",
+        },
+    )
+    assert patient.status_code == 201, patient.text
+    assert patient.json()["role"] == "patient"
+
+    duplicate = client.post(
+        "/admin/users",
+        headers=admin_headers,
+        json={
+            "email": "nowy.pacjent@gabinet.pl",
+            "password": DEMO_PASSWORD,
+            "first_name": "Drugi",
+            "last_name": "Konto",
+            "role": "patient",
+        },
+    )
+    assert duplicate.status_code == 409
+
+    # zwykły pacjent i brak logowania nie mają dostępu
+    email, _ = _register_patient(client)
+    patient_headers = _login(client, email)
+    forbidden = client.post(
+        "/admin/users",
+        headers=patient_headers,
+        json={
+            "email": "nie.wolno@gabinet.pl",
+            "password": DEMO_PASSWORD,
+            "first_name": "Nie",
+            "last_name": "Wolno",
+            "role": "admin",
+        },
+    )
+    assert forbidden.status_code == 403
+    anonymous = client.post(
+        "/admin/users",
+        json={
+            "email": "nie.wolno@gabinet.pl",
+            "password": DEMO_PASSWORD,
+            "first_name": "Nie",
+            "last_name": "Wolno",
+            "role": "admin",
+        },
+    )
+    assert anonymous.status_code == 401
+
+
+def test_admin_patients_list(
+    client: TestClient, db_session: Session, clinic: dict[str, int]
+):
+    _make_admin(db_session)
+    admin_headers = _login(client, "admin.test@gabinet.pl")
+    email, _ = _register_patient(client, sex="female")
+
+    response = client.get("/admin/patients", headers=admin_headers)
+    assert response.status_code == 200
+    entry = next(p for p in response.json() if p["email"] == email)
+    assert entry["first_name"] == "Test"
+    assert entry["sex"] == "female"
+    assert entry["appointments_count"] == 0
+    assert entry["reports_count"] == 0
+
+    # lekarz nie ma dostępu do listy administracyjnej
+    doctor_headers = _login(client, "dr.test@gabinet.pl")
+    assert client.get("/admin/patients", headers=doctor_headers).status_code == 403
+
+
+def test_doctor_manages_services(client: TestClient, clinic: dict[str, int]):
+    doctor_headers = _login(client, "dr.test@gabinet.pl")
+
+    created = client.post(
+        "/services",
+        headers=doctor_headers,
+        json={"name": "Krioterapia", "duration_minutes": 15, "price": "120.00"},
+    )
+    assert created.status_code == 201, created.text
+    service_id = created.json()["id"]
+
+    updated = client.put(
+        f"/services/{service_id}",
+        headers=doctor_headers,
+        json={"name": "Krioterapia", "duration_minutes": 15, "price": "150.00"},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["price"] == "150.00"
+
+    deleted = client.delete(f"/services/{service_id}", headers=doctor_headers)
+    assert deleted.status_code == 204
+
+    # pacjent nie może grzebać w cenniku
+    email, _ = _register_patient(client)
+    patient_headers = _login(client, email)
+    forbidden = client.post(
+        "/services",
+        headers=patient_headers,
+        json={"name": "Nielegalna", "duration_minutes": 10, "price": "1.00"},
+    )
+    assert forbidden.status_code == 403

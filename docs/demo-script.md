@@ -18,7 +18,11 @@ Mailpit na [localhost:8025](http://localhost:8025). Wszystkie konta mają hasło
    data i wolny termin → potwierdzenie.
 3. Pokaż **Wizyta zarezerwowana** i nową pozycję w panelu.
 4. Otwórz [localhost:8025](http://localhost:8025) — **e-mail z potwierdzeniem** w Mailpicie.
-5. Odwołaj wizytę w panelu — drugi e-mail (odwołanie). *(Można zostawić wizytę z seeda.)*
+5. Kliknij **Odwołaj** przy wizycie — pojawi się **dialog potwierdzenia** z nazwą
+   usługi i datą wizyty („Odwołać wizytę? Kontrola u Anna Kowalska, środa, 4 listopada
+   11:00”). Potwierdź — wizyta przechodzi do historii jako odwołana i przychodzi
+   drugi e-mail (odwołanie). *(Zamiast odwoływać, możesz kliknąć „Nie, zostaw”
+   i pokazać tylko dialog.)*
 
 ## 3. Lekarz i mapa ciała (~1,5 min)
 

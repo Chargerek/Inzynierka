@@ -178,10 +178,10 @@ def arm_mask(cut, side, p):
 PARAMS = {
     "female": dict(chin=122, neck_bot=146, chest_bot=268, abdomen_bot=372,
                    pelvis_bot=452, elbow=338, wrist=398, knee=652, ankle=838,
-                   hand_bot=520),
+                   hand_bot=545),
     "male": dict(chin=120, neck_bot=146, chest_bot=268, abdomen_bot=370,
                  pelvis_bot=452, elbow=342, wrist=404, knee=652, ankle=836,
-                 hand_bot=520),
+                 hand_bot=545),
 }
 
 BACK_BANDS = [("upper_back", "neck_bot", 292), ("lower_back", 292, 378),
