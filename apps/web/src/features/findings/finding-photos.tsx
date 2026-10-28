@@ -67,7 +67,7 @@ export function FindingPhotos({
   };
 
   return (
-    <div className="border-t border-zinc-100 bg-zinc-50 px-5 py-4">
+    <div className="bg-zinc-50 px-5 py-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
           Zdjęcia ({finding.photos.length})
@@ -98,7 +98,9 @@ export function FindingPhotos({
           {error}
         </p>
       ) : null}
-      {finding.photos.length > 0 ? (
+      {finding.photos.length === 0 ? (
+        <p className="mt-2 text-xs text-zinc-400">Brak zdjęć.</p>
+      ) : (
         <div className="mt-3 flex flex-wrap gap-3">
           {finding.photos.map((photo) => (
             <PhotoThumb
@@ -110,7 +112,7 @@ export function FindingPhotos({
             />
           ))}
         </div>
-      ) : null}
+      )}
       {previewUrl ? (
         <PhotoLightbox url={previewUrl} onClose={() => setPreviewUrl(null)} />
       ) : null}

@@ -135,7 +135,8 @@ export function PatientRecords() {
         last_name: selectedPatient.last_name,
       },
       reportId: null,
-      initialFigure: reports?.[0]?.body_figure ?? "male",
+      initialFigure:
+        selectedPatient.sex ?? reports?.[0]?.body_figure ?? "male",
     });
   };
 

@@ -44,6 +44,7 @@ class DoctorPatientRead(BaseModel):
     id: int
     first_name: str
     last_name: str
+    sex: Literal["male", "female"] | None = None
     reports_count: int = 0
     last_report_at: datetime | None = None
 

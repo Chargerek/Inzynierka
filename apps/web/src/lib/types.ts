@@ -1,5 +1,7 @@
 export type UserRole = "patient" | "dermatologist" | "admin";
 
+export type Sex = "male" | "female";
+
 export type User = {
   id: number;
   email: string;
@@ -7,6 +9,7 @@ export type User = {
   first_name: string;
   last_name: string;
   phone: string | null;
+  sex: Sex | null;
 };
 
 export type TokenResponse = {
@@ -27,6 +30,7 @@ export type RegisterPayload = {
   first_name: string;
   last_name: string;
   phone?: string | null;
+  sex: Sex;
   consent_accepted: boolean;
 };
 
@@ -91,6 +95,32 @@ export type Appointment = {
   patient: PatientSummary | null;
 };
 
+export type AdminCreateUserPayload = {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  phone?: string | null;
+  role: UserRole;
+  sex?: Sex | null;
+  specialization?: string;
+  bio?: string | null;
+};
+
+export type AdminPatient = {
+  id: number;
+  user_id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  sex: Sex | null;
+  birth_date: string | null;
+  created_at: string;
+  appointments_count: number;
+  reports_count: number;
+};
+
 export type AdminUser = {
   id: number;
   email: string;
@@ -148,6 +178,7 @@ export type DoctorPatient = {
   id: number;
   first_name: string;
   last_name: string;
+  sex: Sex | null;
   reports_count: number;
   last_report_at: string | null;
 };

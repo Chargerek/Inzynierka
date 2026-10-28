@@ -47,6 +47,7 @@ function PatientPanel() {
   const [appointments, setAppointments] = useState<Appointment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [toCancel, setToCancel] = useState<Appointment | null>(null);
 
   const loadAppointments = useCallback(() => {
     authorizedFetch<Appointment[]>("/appointments/me")
@@ -71,6 +72,7 @@ function PatientPanel() {
       await authorizedFetch(`/appointments/${appointment.id}/cancel`, {
         method: "POST",
       });
+      setToCancel(null);
       loadAppointments();
     } catch (err) {
       setError(
@@ -164,7 +166,7 @@ function PatientPanel() {
                   <StatusBadge status={appointment.status} />
                   <button
                     type="button"
-                    onClick={() => handleCancel(appointment)}
+                    onClick={() => setToCancel(appointment)}
                     disabled={cancellingId === appointment.id}
                     className="rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
@@ -207,6 +209,62 @@ function PatientPanel() {
           </>
         ) : null}
       </section>
+
+      {toCancel ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cancel-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 px-4"
+          onClick={() => {
+            if (cancellingId === null) setToCancel(null);
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3
+              id="cancel-dialog-title"
+              className="text-lg font-semibold text-zinc-900"
+            >
+              Odwołać wizytę?
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-zinc-600">
+              Czy na pewno chcesz odwołać wizytę{" "}
+              <span className="font-medium text-zinc-900">
+                {toCancel.service.name}
+                {toCancel.doctor
+                  ? ` u ${toCancel.doctor.first_name} ${toCancel.doctor.last_name}`
+                  : ""}
+              </span>
+              , zaplanowaną na{" "}
+              <span className="font-medium capitalize text-zinc-900">
+                {formatDateTime(toCancel.start_at)}
+              </span>
+              ? Tej operacji nie można cofnąć.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setToCancel(null)}
+                disabled={cancellingId !== null}
+                className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Nie, zostaw
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCancel(toCancel)}
+                disabled={cancellingId !== null}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {cancellingId !== null ? "Odwoływanie…" : "Tak, odwołaj"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -48,6 +48,11 @@ class BodyFigure(str, enum.Enum):
     FEMALE = "female"
 
 
+class Sex(str, enum.Enum):
+    MALE = "male"
+    FEMALE = "female"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -60,6 +65,9 @@ class User(Base):
     first_name: Mapped[str] = mapped_column(String(100))
     last_name: Mapped[str] = mapped_column(String(100))
     phone: Mapped[str | None] = mapped_column(String(30))
+    sex: Mapped[Sex | None] = mapped_column(
+        Enum(Sex, name="user_sex", values_callable=_enum_values)
+    )
     consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
